@@ -1,0 +1,16 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["eslint", "typescript", "unicorn", "oxc", "vue"],
+  "env": {
+    "browser": true
+  },
+  "categories": {
+    "correctness": "error"
+  },
+  "rules": {
+    "@typescript-eslint/no-explicit-any": [
+      "error",
+      { "ignoreRestArgs": true, "fixToUnknown": false }
+    ]
+  }
+}
