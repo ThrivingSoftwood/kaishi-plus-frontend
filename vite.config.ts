@@ -37,7 +37,7 @@ export default defineConfig({
       }
     }
   },
-  /* 测试阶段启用
+  /* // 测试阶段启用
   build: {
     // 🌟 1. 禁用代码压缩混淆
     // 设置为 false 后，打包出的 JS 将保留原始的变量名、空格和缩进
