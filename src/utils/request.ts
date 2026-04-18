@@ -1,67 +1,82 @@
-import { defineStore } from 'pinia'
-import { computed, ref } from 'vue'
+import axios, { type InternalAxiosRequestConfig, type AxiosResponse } from 'axios'
+import { ElMessage } from 'element-plus'
+import router from '@/router'
+// 🌟 新增引入
+import { useAuthStore } from '@/stores/auth'
 
-export const useAuthStore = defineStore('auth', () => {
-  // 基础身份信息
-  const token = ref<string>(localStorage.getItem('kaishi_token') || '')
-  const loginAccount = ref<string>(localStorage.getItem('kaishi_account') || '')
-  const username = ref<string>(localStorage.getItem('kaishi_user') || '')
+// 定义后端通用返回结构
+export interface Result<T = any> {
+  success: boolean
+  code: number
+  msg: string
+  data: T
+  timestamp: number
+}
 
-  // 🌟 核心补丁：权限标识集合 (从 LocalStorage 恢复)
-  const permissions = ref<string[]>(JSON.parse(localStorage.getItem('kaishi_perms') || '[]'))
-
-  const isAuthenticated = computed<boolean>(() => !!token.value)
-
-  /**
-   * 🌟 核心补丁：上帝模式与权限判定
-   */
-  function hasPerm(perm: string): boolean {
-    // 1. 如果账号是 kaishi，直接放行 (上帝模式)
-    if (loginAccount.value === 'kaishi') return true
-    // 2. 如果权限列表包含 '*' (超管角色)，直接放行
-    if (permissions.value.includes('*')) return true
-    // 3. 匹配具体的权限标识
-    return permissions.value.includes(perm)
-  }
-
-  /**
-   * 登录时全量设置信息
-   */
-  function setAuthInfo(newToken: string, newLoginAccount: string, newUsername: string, newPerms: string[]) {
-    token.value = newToken
-    loginAccount.value = newLoginAccount
-    username.value = newUsername
-    permissions.value = newPerms || []
-
-    localStorage.setItem('kaishi_token', newToken)
-    localStorage.setItem('kaishi_account', newLoginAccount)
-    localStorage.setItem('kaishi_user', newUsername)
-    localStorage.setItem('kaishi_perms', JSON.stringify(permissions.value))
-  }
-
-  /**
-   * 🌟 核心补丁：静默刷新时仅更新 Token 和权限
-   */
-  function updateTokenAndPerms(newToken: string, newPerms: string[]) {
-    token.value = newToken
-    permissions.value = newPerms || []
-    localStorage.setItem('kaishi_token', newToken)
-    localStorage.setItem('kaishi_perms', JSON.stringify(permissions.value))
-  }
-
-  function clearAuth() {
-    token.value = ''
-    loginAccount.value = ''
-    username.value = ''
-    permissions.value = []
-    localStorage.removeItem('kaishi_token')
-    localStorage.removeItem('kaishi_account')
-    localStorage.removeItem('kaishi_user')
-    localStorage.removeItem('kaishi_perms')
-  }
-
-  return {
-    token, loginAccount, username, permissions,
-    isAuthenticated, hasPerm, setAuthInfo, updateTokenAndPerms, clearAuth
-  }
+const request = axios.create({
+  baseURL: '/api',
+  timeout: 10000
 })
+
+request.interceptors.request.use(
+  (config: InternalAxiosRequestConfig) => {
+    const token = localStorage.getItem('kaishi_token')
+    if (token) {
+      config.headers.set('Authorization', `Bearer ${token}`)
+    }
+    return config
+  },
+  (error) => Promise.reject(error)
+)
+
+request.interceptors.response.use(
+  (response: AxiosResponse<Result>) => {
+    const res = response.data
+    if (res.success !== undefined) {
+      if (res.success) {
+        return res.data // 直接返回 data 泛型对象
+      } else {
+        if (res.code === 401) {
+          ElMessage.warning('登录已过期或未授权，请重新登录')
+
+          // 🌟 核心修正：必须调用 store 的 clearAuth，确保 Pinia 内存和 LocalStorage 同步清空
+          // 注意：useAuthStore() 必须在函数内部调用，防止在 Pinia 挂载前过早执行
+          const authStore = useAuthStore()
+          authStore.clearAuth()
+
+          router.push({ name: 'Login' })
+          return Promise.reject(new Error(res.msg || 'Error'))
+        } else {
+          ElMessage.error(res.msg || '系统异常')
+          return Promise.reject(new Error(res.msg || 'Error'))
+        }
+      }
+    }
+    return res
+  },
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      ElMessage.warning('登录已过期或未授权，请重新登录')
+
+      // 🌟 核心修正
+      const authStore = useAuthStore()
+      authStore.clearAuth()
+
+      router.push({ name: 'Login' })
+    } else {
+      // 如果后端崩了返回了 HTML (Spring 默认错误页) 或者超长的数据库报错
+      // 🌟 修复 JavaScript 陷阱：indexOf 未找到返回 -1，-1 为 true。必须使用 includes
+      const isTimeout = error.message && error.message.includes('timeout of')
+      const errorMsg = error.response?.data?.msg || (isTimeout ? "请求超时,请检查服务端与数据库是否正常!" : error.message);
+
+      if (errorMsg && (errorMsg.includes('SQL') || errorMsg.includes('Exception'))) {
+        ElMessage.error('系统底层响应异常，请联系管理员');
+      } else {
+        ElMessage.error(errorMsg || '未知错误');
+      }
+    }
+    return Promise.reject(error)
+  }
+)
+
+export default request
