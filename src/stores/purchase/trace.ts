@@ -7,7 +7,7 @@ import {
   getPurchaseListInfoApi,
   type PurchaseOrderTraceDTO,
   type PurchaseTraceVO
-} from '@/api/trace/purchase.ts'
+} from '@/api/purchase/trace.ts'
 const needRefreshList = ref<boolean>(false)
 export const useTraceStore = defineStore('trace', () => {
   const listInfo = ref<DlyBuyVO[]>([])

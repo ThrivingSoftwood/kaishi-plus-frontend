@@ -16,40 +16,22 @@
           unique-opened
           router
         >
-          <!-- 一级节点：系统管理 -->
-          <el-sub-menu index="/placeholder">
+          <!-- 静态系统主页始终保留在最上方 -->
+          <el-menu-item index="/placeholder">
+            <el-icon><HomeFilled /></el-icon>
             <template #title>
-              <el-icon>
-                <Setting/>
-              </el-icon>
-              <span>系统管理</span></template>
-            <el-menu-item index="">菜单管理</el-menu-item>
-            <el-menu-item index="">组织机构</el-menu-item>
-            <el-menu-item index="">角色管理</el-menu-item>
-            <el-menu-item index="">用户管理</el-menu-item>
-            <el-menu-item index="">数据字典</el-menu-item>
-            <el-menu-item index="">配置中心</el-menu-item>
-          </el-sub-menu>
+              <span>系统主页</span>
+            </template>
+          </el-menu-item>
 
-          <!-- 一级节点：采购管理 -->
-          <el-sub-menu index="/purchase">
-            <template #title>
-              <el-icon>
-                <ShoppingCart/>
-              </el-icon>
-              <span>采购管理</span></template>
-            <el-sub-menu index="/trace">
-              <template #title>
-                <el-icon>
-                  <ShoppingCart/>
-                </el-icon>
-                采购单追踪
-              </template>
-              <el-menu-item index="/trace/purchase/finished">已完成</el-menu-item>
-              <el-menu-item index="/trace/purchase/others">其他</el-menu-item>
-            </el-sub-menu>
-            <el-menu-item index="/purchase/order">订单管理</el-menu-item>
-          </el-sub-menu>
+          <!-- 🌟 将繁琐的 v-for 替换为我们刚才写的递归组件 -->
+          <!-- 遍历顶层菜单数组，把每个节点扔进递归机器里 -->
+          <SidebarItem
+            v-for="menu in permissionStore.menus"
+            :key="menu.path"
+            :menu="menu"
+          />
+
         </el-menu>
       </div>
     </aside>
@@ -156,8 +138,7 @@ import {useRoute, useRouter} from 'vue-router'
 import {
   ArrowDown,
   Lock,
-  Setting,
-  ShoppingCart,
+  HomeFilled,
   SwitchButton,
   UserFilled
 } from '@element-plus/icons-vue'
@@ -167,6 +148,10 @@ import {useAuthStore} from '@/stores/auth'
 import {encryptPassword} from '@/utils/sm4'
 import {changePasswordApi, type ChangePwdReq} from '@/api/auth'
 import {useTagsStore} from '@/stores/tags'
+import SidebarItem from '@/layout/SidebarItem.vue'
+import { usePermissionStore } from '@/stores/system/permission'
+
+const permissionStore = usePermissionStore()
 
 
 const route = useRoute()

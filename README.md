@@ -74,16 +74,16 @@
     *   `POST /kaishi/auth/changePassword`
     *   **Req:** `ChangePwdReq` (loginAccount, oldPasswordEnc, newPasswordEnc)
 
-### 3.2 采购追踪模块 (`purchase.ts`)
+### 3.2 采购追踪模块 (`trace.ts`)
 
 *   **获取追踪列表 (List Info):**
-    *   `POST /kaishi/trace/purchase/list/info`
+    *   `POST /kaishi/purchase/trace/list/info`
     *   **Req:** `PurchaseOrderTraceDTO` (包含排序 `sortInfo`、分页 `pageNo`/`pageSize`、及各种检索条件)
     *   **Resp:** `DlyBuyVO[]` (包含前端计算所需的采购数量 `buyQty`、已入库数量 `stockedQty`、缺交数量 `owedQty` 及状态标签)
 *   **获取详情 (Detail):**
-    *   `POST /kaishi/trace/purchase/list/detail`
+    *   `POST /kaishi/purchase/trace/list/detail`
     *   **Req:** `PurchaseOrderTraceDTO` (主要使用 `vchcode` 和 `dlyorder`)
     *   **Resp:** `PurchaseTraceVO[]` (A表采购计划 + B表入库实绩的对撞数据)
 *   **手动置为完成 (Manual Finish):**
-    *   `POST /kaishi/trace/purchase/manual/finish`
+    *   `POST /kaishi/purchase/trace/manual/finish`
     *   **Req:** `ManualFinishReq` (vchType, vchCode, dlyOrder, extInfo)

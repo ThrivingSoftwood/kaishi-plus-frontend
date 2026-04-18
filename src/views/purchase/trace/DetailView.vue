@@ -92,23 +92,6 @@
         </el-table-column>
 
         <el-table-column prop="aComment" label="摘要/备注" min-width="200" show-overflow-tooltip/>
-
-        <!-- todo 有需求再做细致比对 -->
-        <!-- 操作列
-        <el-table-column label="操作" width="120" fixed="right" align="center">
-          <template #default="{ row }">
-             只有当有真实入库记录时(bQty存在)，才允许比对
-            <el-button
-              v-if="row.bVchcode"
-              type="primary"
-              icon="DataAnalysis"
-              @click="goToComparison(row)"
-            >
-              详情比对
-            </el-button>
-            <span v-else class="text-gray">无实绩</span>
-          </template>
-        </el-table-column> -->
       </el-table>
     </el-card>
   </div>
@@ -117,8 +100,8 @@
 <script lang="ts" setup>
 import {computed, onMounted} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
-import {useTraceStore} from '@/stores/trace/purchase'
-import {manualFinishPurchaseApi, type PurchaseTraceVO} from '@/api/trace/purchase'
+import {useTraceStore} from '@/stores/purchase/trace'
+import {manualFinishPurchaseApi, type PurchaseTraceVO} from '@/api/purchase/trace'
 import {ElMessage, ElMessageBox} from 'element-plus'
 import {Check} from '@element-plus/icons-vue'
 

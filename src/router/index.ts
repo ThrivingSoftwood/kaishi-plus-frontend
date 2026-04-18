@@ -1,42 +1,34 @@
-import {createRouter, createWebHistory, type RouteRecordRaw} from 'vue-router'
-import {useAuthStore} from '@/stores/auth'
+import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+import { usePermissionStore } from '@/stores/system/permission' // 🌟 引入新 Store
 import Layout from '@/layout/IndexView.vue'
 
-const routes: RouteRecordRaw[] = [
+export const constantRoutes: RouteRecordRaw[] = [
   {
     path: '/login',
     name: 'Login',
     component: () => import('@/views/LoginView.vue')
   },
   {
+    // 这个是基础 Layout，动态路由会作为它的 children 注入
     path: '/',
-    component: Layout, // 使用刚刚构建的带有侧边栏的布局
+    name: 'Layout',
+    component: Layout,
     redirect: '/placeholder',
     children: [
       {
         path: '/placeholder',
         name: 'Placeholder',
         component: () => import('@/views/PlaceholderView.vue'),
-        meta: {title: '欢迎页'}
+        meta: { title: '欢迎页' }
       },
+      // 🌟 将所有不需要在侧边栏显示的隐藏详情页写在这里！
+      // 它们会继承 Layout，所以页面上方依然有面包屑，左侧依然有侧边栏
       {
-        path: 'trace/purchase/others',
-        name: 'TraceUnfinishedPurchase',
-        component: () => import('@/views/trace/purchase/IndexView.vue'),
-        meta: {title: '其他采购单', queryPurchased: false}
-      },
-      {
-        path: 'trace/purchase/finished',
-        name: 'TraceFinishedPurchase',
-        component: () => import('@/views/trace/purchase/IndexView.vue'),
-        meta: {title: '已完成采购单', queryPurchased: true}
-      },
-      {
-        // 动态路由：接收 vchcode 和 dlyorder
         path: 'trace/purchase/detail/:vchcode/:dlyorder',
         name: 'TracePurchaseDetail',
-        component: () => import('@/views/trace/purchase/DetailView.vue'),
-        meta: { title: '入库详情列表' }
+        component: () => import('@/views/purchase/trace/DetailView.vue'),
+        meta: { title: '入库详情记录' }
       }
     ]
   }
@@ -44,36 +36,49 @@ const routes: RouteRecordRaw[] = [
 
 const router = createRouter({
   history: createWebHistory(),
-  routes
+  routes: constantRoutes
 })
 
-
-router.beforeEach((to, from, next) => {
+// 🌟 路由守卫：拦截与动态加载
+router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
+  const permissionStore = usePermissionStore()
   const isLogin = authStore.isAuthenticated
 
-  // 1. 如果用户试图访问登录页
   if (to.name === 'Login') {
     if (isLogin) {
-      // 🟢 场景 A：已登录，却通过 URL 手动访问 /login
-      // 动作：拦截，并强制重定向到系统根路径（由路由表配置决定具体去哪）
-      next({path: '/'})
+      next({ path: '/' })
     } else {
-      // ⚪ 场景 B：未登录，正常访问 /login
-      // 动作：放行
       next()
     }
-  }
-  // 2. 如果用户试图访问其他业务页面
-  else {
+  } else {
     if (!isLogin) {
-      // 🔴 场景 C：未登录，试图访问受保护的页面 (如 /trace/purchase/others)
-      // 动作：拦截，强制打回登录页
-      next({name: 'Login'})
+      // 未登录，拦截
+      next({ name: 'Login' })
     } else {
-      // 🟢 场景 D：已登录，正常访问业务页面
-      // 动作：正常放行
-      next()
+      // 🌟 核心拦截逻辑：已登录，但动态路由还没加载
+      if (!permissionStore.isRoutesLoaded) {
+        // 1. 生成路由表
+        const accessRoutes = await permissionStore.generateRoutes()
+
+        // 2. 将生成的路由动态添加到 Vue Router 中
+        // 挂载到 name='Layout' 的根路由下，这样它们就会在 <router-view> 中渲染
+        accessRoutes.forEach(route => {
+          // 如果是一级目录，因为我们刚才转换时已经给了 component: Layout
+          // 所以直接 addRoute 即可
+          router.addRoute(route)
+        })
+
+        // 3. 标记为已加载
+        permissionStore.isRoutesLoaded = true
+
+        // 4. 🚨 终极防坑：触发重定向，确保刚刚 addRoute 的地址能被正确解析
+        // replace: true 确保浏览器历史记录不会多出一条奇怪的记录
+        next({ ...to, replace: true })
+      } else {
+        // 路由已加载，正常放行
+        next()
+      }
     }
   }
 })

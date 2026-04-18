@@ -144,9 +144,9 @@
 
 <script lang="ts" setup>
 import { ref, onMounted,onActivated } from 'vue'
-import {routerKey, useRoute, useRouter} from 'vue-router'
-import { useTraceStore } from '@/stores/trace/purchase'
-import type {DlyBuyVO} from "@/api/trace/purchase.ts";
+import { useRoute, useRouter} from 'vue-router'
+import { useTraceStore } from '@/stores/purchase/trace'
+import type {DlyBuyVO} from "@/api/purchase/trace.ts";
 
 // 给组件命名 (可选，但推荐在使用 KeepAlive 时加上)
 defineOptions({ name: 'PurchaseIndexView' })
@@ -215,7 +215,7 @@ const goToDetail = (row: DlyBuyVO) => {
   // 使用编程式路由导航。由于之前商定要支持多层级穿透，我们需要将唯一键传过去
   // 我们需要在 router 中配置动态路由：/trace/detail/:vchcode/:dlyorder
   router.push({
-    path: `/trace/purchase/detail/${row.vchCode}/${row.dlyOrder}`,
+    path: `/purchase/trace/detail/${row.vchCode}/${row.dlyOrder}`,
     // 🌟 新增 query 参数：如果是从已完成列表进来的，传入 isFinished=true
     query: {
       isFinished: route.meta.queryPurchased ? 'true' : 'false',

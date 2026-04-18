@@ -1,4 +1,4 @@
-// src/api/trace/purchase.ts
+// src/api/purchase/trace.ts
 import request from '@/utils/request.ts'
 
 // 1. 请求参数 DTO (对应后端的 PurchaseOrderTraceDTO)
@@ -196,7 +196,7 @@ export interface DlyBuyVO {
 // 3. API 调用方法
 // 注意：由于你后端直接返回的是 List<DlyBuyVO>，所以泛型为 DlyBuyVO[]
 export const getPurchaseListInfoApi = (data: PurchaseOrderTraceDTO) => {
-  return request.post<any, DlyBuyVO[]>('/kaishi/trace/purchase/list/info', data)
+  return request.post<any, DlyBuyVO[]>('/kaishi/purchase/trace/list/info', data)
 }
 
 
@@ -235,7 +235,7 @@ export interface PurchaseTraceVO {
 
 // 获取具体单据的入库详情
 export const getPurchaseDetailApi = (data: PurchaseOrderTraceDTO) => {
-  return request.post<any, PurchaseTraceVO[]>('/kaishi/trace/purchase/list/detail', data)
+  return request.post<any, PurchaseTraceVO[]>('/kaishi/purchase/trace/list/detail', data)
 }
 
 /**
@@ -252,5 +252,5 @@ export interface ManualFinishReq {
  * 手动置为完成 API
  */
 export const manualFinishPurchaseApi = (data: ManualFinishReq) => {
-  return request.post<any, any>('/kaishi/trace/purchase/manual/finish', data)
+  return request.post<any, any>('/kaishi/purchase/trace/manual/finish', data)
 }
