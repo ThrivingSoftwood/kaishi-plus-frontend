@@ -9,14 +9,14 @@ export interface DataRuleReq {
 }
 
 export const getAllDataRulesApi = () => {
-  return request.get<any, any[]>('/kaishi/system/data-rule/all')
+  return request.get<any, any[]>('/system/data-rule/all')
 }
 
 // 🌟 补全保存和删除接口
 export const saveDataRuleApi = (data: DataRuleReq) => {
-  return request.post('/kaishi/system/data-rule/save', data)
+  return request.post('/system/data-rule/save', data)
 }
 
 export const deleteDataRuleApi = (id: number) => {
-  return request.delete(`/kaishi/system/data-rule/delete/${id}`)
+  return request.delete(`/system/data-rule/delete/${id}`)
 }

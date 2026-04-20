@@ -13,7 +13,7 @@ export interface LoginResp {
 }
 
 export const loginApi = (data: LoginReq) => {
-  return request.post<any, LoginResp>('/kaishi/auth/login', data)
+  return request.post<any, LoginResp>('/auth/login', data)
 }
 
 // src/api/auth.ts 追加内容
@@ -27,6 +27,5 @@ export interface ChangePwdReq {
 
 // 修改密码 API
 export const changePasswordApi = (data: ChangePwdReq) => {
-  // 假设后端接口为 /kaishi/user/change-password，请根据实际情况调整
-  return request.post<any, any>('/kaishi/auth/changePassword', data)
+  return request.post<any, any>('/auth/changePassword', data)
 }

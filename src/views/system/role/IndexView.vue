@@ -68,7 +68,7 @@
           <el-input v-model.trim="roleForm.roleName" placeholder="请输入角色名称，如: 华东区采购员" />
         </el-form-item>
         <el-form-item label="角色编码" prop="roleCode">
-          <el-input v-model.trim="roleForm.roleCode" placeholder="请输入唯一编码，如: BUYER_EAST" :disabled="!!roleForm.id" />
+          <el-input v-model.trim="roleForm.roleCode" placeholder="请输入唯一编码(暂不支持中文)，如: BUYER_EAST" :disabled="!!roleForm.id" />
         </el-form-item>
         <el-form-item label="显示排序" prop="sortOrder">
           <el-input-number v-model="roleForm.sortOrder" :min="0" controls-position="right" />

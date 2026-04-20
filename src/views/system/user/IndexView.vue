@@ -45,7 +45,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="extCode" label="登录账号 / 员工编号" width="180" align="center"/>
+        <el-table-column prop="loginCode" label="登录账号 / 员工编号" width="180" align="center"/>
 
         <el-table-column label="状态" width="100" align="center">
           <template #default="{ row }">
@@ -171,7 +171,7 @@
 
                 <!-- 员工节点继续显示账号 -->
                 <span v-if="data.nodeType === 2" class="node-ext-code">
-                  ({{ data.extCode }})
+                  ({{ data.loginCode }})
                 </span>
               </span>
             </span>
@@ -257,7 +257,7 @@ const filteredUserTree = computed(() => {
       .filter(node => {
         // 1. 检查自己是否匹配
         const isMatch = node.name.toLowerCase().includes(query) ||
-          (node.extCode && node.extCode.toLowerCase().includes(query))
+          (node.loginCode && node.loginCode.toLowerCase().includes(query))
 
         // 2. 递归检查子节点
         if (node.children && node.children.length > 0) {
@@ -406,7 +406,7 @@ watch(erpSearchQuery, (val) => {
 })
 const filterErpNode = (value: string, data: any) => {
   if (!value) return true
-  return data.name.includes(value) || (data.extCode && data.extCode.includes(value))
+  return data.name.includes(value) || (data.loginCode && data.loginCode.includes(value))
 }
 
 const openSyncDialog = async () => {

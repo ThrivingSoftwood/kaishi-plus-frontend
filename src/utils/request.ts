@@ -49,7 +49,7 @@ request.interceptors.response.use(
         isRefreshing = true
         try {
           // 使用无拦截器的独立 axios 去发请求，携带旧 token
-          const refreshRes = await refreshAxios.post('/kaishi/auth/refreshPerm', {}, {
+          const refreshRes = await refreshAxios.post('/auth/refreshPerm', {}, {
             headers: { 'Authorization': `Bearer ${authStore.token}` }
           })
           if (refreshRes.data.success) {

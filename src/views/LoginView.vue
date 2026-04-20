@@ -8,7 +8,7 @@
         <div class="slogan-wrapper">
           <span class="slogan-text">凯行天下</span>
           <span class="slogan-dot">·</span>
-          <span class="slogan-text">诗意年华</span>
+          <span class="slogan-text">诗意芳华</span>
         </div>
       </div>
       <el-form

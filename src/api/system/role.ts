@@ -8,14 +8,14 @@ const PERM_UPDATE_HEADER = { 'X-Update-Perm': 'true' }
  * 获取角色列表 (仅查询，无需请求头)
  */
 export const getRolesApi = () => {
-  return request.get<any, any[]>('/kaishi/system/role/list')
+  return request.get<any, any[]>('/system/role/list')
 }
 
 /**
  * 保存或新增角色 (涉及角色编码/状态变更，增加请求头)
  */
 export const saveRoleApi = (data: any) => {
-  return request.post<any, string>('/kaishi/system/role/save', data, {
+  return request.post<any, string>('/system/role/save', data, {
     headers: PERM_UPDATE_HEADER
   })
 }
@@ -24,7 +24,7 @@ export const saveRoleApi = (data: any) => {
  * 删除角色 (涉及权限大规模撤销，增加请求头)
  */
 export const deleteRoleApi = (id: number) => {
-  return request.delete<any, string>(`/kaishi/system/role/delete/${id}`, {
+  return request.delete<any, string>(`/system/role/delete/${id}`, {
     headers: PERM_UPDATE_HEADER
   })
 }
@@ -33,21 +33,21 @@ export const deleteRoleApi = (id: number) => {
  * 获取已分配用户 (查询，无需请求头)
  */
 export const getRoleUsersApi = (id: number) => {
-  return request.get<any, number[]>(`/kaishi/system/role/assigned-users/${id}`)
+  return request.get<any, number[]>(`/system/role/assigned-users/${id}`)
 }
 
 /**
  * 获取已分配权限 (查询，无需请求头)
  */
 export const getRolePermsApi = (id: number) => {
-  return request.get<any, number[]>(`/kaishi/system/role/assigned-permissions/${id}`)
+  return request.get<any, number[]>(`/system/role/assigned-permissions/${id}`)
 }
 
 /**
  * 获取已分配数据规则 (查询，无需请求头)
  */
 export const getRoleRulesApi = (id: number) => {
-  return request.get<any, number[]>(`/kaishi/system/role/assigned-data-rules/${id}`)
+  return request.get<any, number[]>(`/system/role/assigned-data-rules/${id}`)
 }
 
 /**
@@ -55,7 +55,7 @@ export const getRoleRulesApi = (id: number) => {
  * 改变了用户与角色的绑定关系，必须增加请求头
  */
 export const assignUsersApi = (data: any) => {
-  return request.post<any, string>('/kaishi/system/role/assign-users', data, {
+  return request.post<any, string>('/system/role/assign-users', data, {
     headers: PERM_UPDATE_HEADER
   })
 }
@@ -65,7 +65,7 @@ export const assignUsersApi = (data: any) => {
  * 直接影响 RBAC 模型的输出，必须增加请求头
  */
 export const assignPermsApi = (data: any) => {
-  return request.post<any, string>('/kaishi/system/role/assign-permissions', data, {
+  return request.post<any, string>('/system/role/assign-permissions', data, {
     headers: PERM_UPDATE_HEADER
   })
 }
@@ -75,7 +75,7 @@ export const assignPermsApi = (data: any) => {
  * 直接影响 ABAC 模型的 SQL 注入逻辑，必须增加请求头
  */
 export const assignRulesApi = (data: any) => {
-  return request.post<any, string>('/kaishi/system/role/assign-data-rules', data, {
+  return request.post<any, string>('/system/role/assign-data-rules', data, {
     headers: PERM_UPDATE_HEADER
   })
 }

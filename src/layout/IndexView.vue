@@ -4,7 +4,7 @@
     <aside class="sidebar">
       <!-- ... 这里是之前的 sidebar 代码 ... -->
       <div class="logo-container">
-        <h2 class="logo-text">凯行天下 诗意年华</h2>
+        <h2 class="logo-text">凯行天下 诗意芳华</h2>
       </div>
       <!--删除 unique-opened,关闭所有 tab 页也不收起菜单-->
       <div class="menu-container">

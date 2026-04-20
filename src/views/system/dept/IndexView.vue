@@ -212,18 +212,13 @@ const openSyncDialog = async () => {
     syncLoading.value = false
   }
 }
+// ... 找到 openSyncDialog 下方的 submitSync 方法 ...
 
 const submitSync = async () => {
   if (!erpTreeRef.value) return
 
-  // 🌟 核心：获取树形组件中被勾选的节点 ID 数组
-  // getCheckedKeys(false) 表示不包含半选中的父节点，因为你的后端会向上递归兜底！
   const checkedKeys = erpTreeRef.value.getCheckedKeys(false) as string[]
-
-  // 2. 🌟 关键：获取半选中的父节点 ID
   const halfCheckedKeys = erpTreeRef.value.getHalfCheckedKeys() as string[]
-
-  // 3. 合并两者，确保从根节点到叶子节点的完整路径都被传回后端
   const allSelectedKeys = [...checkedKeys, ...halfCheckedKeys]
 
   if (allSelectedKeys.length === 0) {
@@ -232,7 +227,9 @@ const submitSync = async () => {
 
   submitSyncLoading.value = true
   try {
-    await syncDepartmentsApi({typeIds: allSelectedKeys})
+    // 🌟 核心修改：将原来的 typeIds 改为 deptTypeIds，严格对齐后端的 ErpSyncReq
+    await syncDepartmentsApi({ deptTypeIds: allSelectedKeys })
+
     ElMessage.success('管家婆部门同步成功！')
     syncDialogVisible.value = false
 

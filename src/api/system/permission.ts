@@ -1,21 +1,21 @@
 import request from '@/utils/request'
 
 export const getPermissionTreeApi = () => {
-  return request.get<any, any[]>('/kaishi/system/permission/tree')
+  return request.get<any, any[]>('/system/permission/tree')
 }
 
 export const savePermissionApi = (data: any) => {
-  return request.post('/kaishi/system/permission/save', data)
+  return request.post('/system/permission/save', data)
 }
 
 export const updatePermissionApi = (data: any) => {
-  return request.put('/kaishi/system/permission/update', data)
+  return request.put('/system/permission/update', data)
 }
 
 export const deletePermissionApi = (id: number) => {
-  return request.delete(`/kaishi/system/permission/delete/${id}`)
+  return request.delete(`/system/permission/delete/${id}`)
 }
 
 export const getMenusApi = (loginAccount: string) => {
-  return request.get<any, any[]>(`/kaishi/system/permission/getMenuPermissions/${loginAccount}`)
+  return request.get<any, any[]>(`/system/permission/getMenuPermissions/${loginAccount}`)
 }

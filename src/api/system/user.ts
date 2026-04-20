@@ -2,63 +2,65 @@ import request from '@/utils/request'
 
 // 混合树节点 VO
 export interface OrgNodeVO {
-  id: string           // 带有前缀的ID (如 D_1, U_5, E_ABC)
+  id: string
   parentId: string
   name: string
-  nodeType: number     // 1: 部门, 2: 员工
+  nodeType: number
   status?: number
-  extCode?: string
+  loginCode?: string
   sourceId?: string
   disabled?: boolean
+  userCount?: number
   children?: OrgNodeVO[]
 }
 
-// 请求入参 Record
 export interface UserReq {
-  id?: number          // 剥离前缀后的本地真实 ID (Long)
+  id?: number
   deptId?: number
   status?: number
   newPasswordEnc?: string
-  erpEmployeeTypeIds?: string[] // 剥离前缀后的 ERP typeId 集合
+  erpEmployeeTypeIds?: string[]
+  roleIds?: number[]
 }
 
 // 获取本地 部门-人员 树
 export const getSystemUserTreeApi = () => {
-  return request.post<any, OrgNodeVO[]>('/kaishi/system/user/tree/synced')
-}
-
-// 获取管家婆 未同步的 部门-人员 树
-export const getErpUnsyncedUserTreeApi = () => {
-  return request.post<any, OrgNodeVO[]>('/kaishi/system/user/tree/unsynced')
-}
-
-// 执行同步引入
-export const syncUsersApi = (data: UserReq) => {
-  return request.post('/kaishi/system/user/sync', data)
+  return request.post<any, OrgNodeVO[]>('/system/user/tree')
 }
 
 // 更新状态或部门
 export const updateUserApi = (data: UserReq) => {
-  return request.put('/kaishi/system/user/update', data)
+  return request.put('/system/user/update', data)
 }
 
 // 重置密码
 export const resetUserPwdApi = (data: UserReq) => {
-  return request.put('/kaishi/system/user/reset/pwd', data)
+  return request.put('/system/user/reset/pwd', data)
 }
 
 // 删除本地用户
 export const deleteUserApi = (id: number) => {
-  return request.delete<any, string>(`/kaishi/system/user/delete/${id}`)
+  return request.delete<any, string>(`/system/user/delete/${id}`)
 }
 
 export const getUserRolesApi = (userId: number) => {
-  return request.get<any, number[]>(`/kaishi/system/user/assigned-roles/${userId}`)
+  return request.get<any, number[]>(`/system/user/assigned-roles/${userId}`)
 }
 
 export const assignRolesToUserApi = (data: { id: number; roleIds: number[] }) => {
-  return request.post<any, string>('/kaishi/system/user/assign-roles', data, {
+  return request.post<any, string>('/system/user/assign-roles', data, {
     // 🌟 同样需要加上请求头，触发后端立即刷新权限
     headers: { 'X-Update-Perm': 'true' }
   })
+}
+
+// ================== ERP 同步业务 (走 kaishi/sync) ==================
+// 获取管家婆 未同步的 部门-人员 树
+export const getErpUnsyncedUserTreeApi = () => {
+  return request.post<any, OrgNodeVO[]>('/kaishi/sync/user/tree-unsynced')
+}
+
+// 执行同步引入
+export const syncUsersApi = (data: any) => {
+  return request.post('/kaishi/sync/user', data)
 }
