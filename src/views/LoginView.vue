@@ -19,13 +19,15 @@
         @keyup.enter="handleLogin"
       >
         <el-form-item prop="loginAccount">
-          <el-input v-model.trim="loginForm.loginAccount" placeholder="账号" clearable />
+          <el-input v-model.trim="loginForm.loginAccount" ref="accountRef" placeholder="账号" clearable/>
         </el-form-item>
         <el-form-item prop="password">
-          <el-input v-model="loginForm.password" type="password" placeholder="密码" show-password oncopy="return false" oncut="return false" />
+          <el-input v-model="loginForm.password" ref="passwordRef" type="password" placeholder="密码" show-password
+                    oncopy="return false" oncut="return false"/>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" style="width: 100%; margin-top: 10px;" :loading="isLoading" @click="handleLogin">
+          <el-button type="primary" style="width: 100%; margin-top: 10px;" :loading="isLoading"
+                     @click="handleLogin">
             登 录
           </el-button>
         </el-form-item>
@@ -36,23 +38,44 @@
 
 <script lang="ts" setup>
 // 这里的 JS 逻辑保持你原来的不变，无需改动
-import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import type { FormInstance, FormRules } from 'element-plus'
-import { encryptPassword } from '@/utils/sm4'
-import { loginApi, type LoginReq } from '@/api/auth'
-import { useAuthStore } from '@/stores/auth'
+import {onMounted, reactive, ref, nextTick} from 'vue'
+import {useRouter} from 'vue-router'
+import type {FormInstance, FormRules} from 'element-plus'
+import {ElMessage} from 'element-plus'
+import {encryptPassword} from '@/utils/sm4'
+import {loginApi, type LoginReq} from '@/api/auth'
+import {useAuthStore} from '@/stores/auth'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const loginFormRef = ref<FormInstance>()
 const isLoading = ref<boolean>(false)
 
-const loginForm = reactive({ loginAccount: 'kaishi', password: '' })
+// 🌟 1. 初始化时：尝试从 localStorage 中读取上次成功登录的账号
+const lastAccount = localStorage.getItem('kaishi_last_account') || ''
+// 将读取到的账号作为响应式表单的初始值
+const loginForm = reactive({loginAccount: lastAccount, password: ''})
+
 const loginRules = reactive<FormRules>({
-  loginAccount:[{ required: true, message: '账号不能为空', trigger: 'blur' }],
-  password:[{ required: true, message: '密码不能为空', trigger: 'blur' }]
+  loginAccount: [{required: true, message: '账号不能为空', trigger: 'blur'}],
+  password: [{required: true, message: '密码不能为空', trigger: 'blur'}]
+})
+
+const accountRef = ref()
+const passwordRef = ref()
+
+onMounted(async () => {
+  // 确保 DOM 已经完全稳定
+  await nextTick()
+
+  if (loginForm.loginAccount) {
+    // 如果账号有值，聚焦到密码框
+    // Element Plus 的输入框 focus 需要调用其内部暴露的方法
+    passwordRef.value?.focus()
+  } else {
+    // 否则聚焦到账号框
+    accountRef.value?.focus()
+  }
 })
 
 const handleLogin = async () => {
@@ -66,9 +89,21 @@ const handleLogin = async () => {
           encryptedPassword: encryptPassword(loginForm.password)
         }
         const resData = await loginApi(reqData)
-        authStore.setAuthInfo(resData.token, loginForm.loginAccount, resData.username)
+
+        // 🌟 核心：登录成功后，立即将该账号存入持久化偏好设置
+        // 这个 key 'kaishi_last_account' 不会被 authStore.clearAuth() 删掉
+        localStorage.setItem('kaishi_last_account', loginForm.loginAccount)
+
+        authStore.setAuthInfo(
+          resData.token,
+          loginForm.loginAccount,
+          resData.username,
+          resData.permissions || [],
+          resData.roleCodes || []
+        )
+
         ElMessage.success('登录成功')
-        await router.push({ path: '/' })
+        await router.push({path: '/'})
       } catch (error) {
         console.error(error)
       } finally {

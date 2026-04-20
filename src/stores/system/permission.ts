@@ -1,8 +1,9 @@
 import { defineStore } from 'pinia'
-import { ref, h } from 'vue'
+import { ref, h, defineComponent, defineAsyncComponent } from 'vue'
 import { RouterView, type RouteRecordRaw } from 'vue-router'
 import Layout from '@/layout/IndexView.vue'
-import { getPermissionTreeApi } from '@/api/system/permission'
+import {getMenusApi, getPermissionTreeApi} from '@/api/system/permission'
+import {useAuthStore} from "@/stores/auth.ts";
 
 const viewsModules = import.meta.glob('/src/views/**/*.vue')
 
@@ -11,9 +12,11 @@ export const usePermissionStore = defineStore('permission', () => {
   const isRoutesLoaded = ref<boolean>(false)
 
   const generateRoutes = async () => {
+    const authStore = useAuthStore()
     try {
       const res = await getPermissionTreeApi()
-      const rawMenus = res || []
+      const menuRes =  await getMenusApi(authStore.loginAccount)
+      const rawMenus = menuRes || []
 
       // 🌟 核心修复 1：计算 fullPath，专供 Element Plus 侧边栏跳转使用
       const buildFullPath = (list: any[], basePath = '') => {
@@ -78,14 +81,25 @@ export const usePermissionStore = defineStore('permission', () => {
           : () => Promise.resolve({ render: () => h(RouterView) })
 
       } else if (menu.permissionType === 2 && menu.component) {
-        // 🌟 剔除 component 前导斜杠，保障 import.meta.glob 精确匹配
         const safeComponent = menu.component.replace(/^\/+/, '')
         const componentPath = `/src/views/${safeComponent}.vue`
 
-        route.component = viewsModules[componentPath]
+        const asyncImportFn = viewsModules[componentPath]
 
-        if (!route.component) {
-          console.error(`🚨 严重错误：未找到前端组件文件 -> ${componentPath} (由菜单 ${menu.permissionName} 触发)`)
+        if (asyncImportFn) {
+          // 🌟 核心黑科技：给复用的组件穿上带名字的“马甲”
+          // 1. 将动态导入转化为异步组件
+          const AsyncComp = defineAsyncComponent(asyncImportFn as any)
+
+          // 2. 在外层套一个空壳组件，强制其 name 与当前路由 name 完全一致
+          route.component = defineComponent({
+            name: route.name as string,
+            render() {
+              return h(AsyncComp)
+            }
+          })
+        } else {
+          console.error(`🚨 未找到前端组件... -> ${componentPath}`)
           route.component = () => import('@/views/PlaceholderView.vue')
         }
       }

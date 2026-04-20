@@ -4,14 +4,18 @@
       <template #header>
         <div class="card-header">
           <span>菜单与资源权限管理</span>
-          <el-button type="primary" icon="Plus" @click="openDialog(null)">新增根节点</el-button>
+          <!-- 🌟 增加搜索框 -->
+          <div style="display: flex; gap: 10px;">
+            <el-input v-model="searchQuery" placeholder="搜索节点名称" clearable prefix-icon="Search" style="width: 200px;" />
+            <el-button type="primary" icon="Plus" @click="openDialog(null)">新增根节点</el-button>
+          </div>
         </div>
       </template>
 
-      <!-- 🌟 树形表格：只要数据里有 children 字段且指定 row-key，自动渲染为树 -->
+      <!-- 🌟 将 :data="treeData" 改为 :data="filteredTreeData" -->
       <el-table
         v-loading="loading"
-        :data="treeData"
+        :data="filteredTreeData"
         row-key="id"
         border
         default-expand-all
@@ -32,9 +36,9 @@
             <el-tag v-else-if="row.permissionType === 5" type="danger">数据列</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="permissionCode" label="权限标识" min-width="180" />
+        <el-table-column prop="permissionCode" label="权限标识(目录节点无需配置)" min-width="180" />
         <el-table-column prop="path" label="路由路径" min-width="150" show-overflow-tooltip />
-        <el-table-column prop="component" label="组件路径" min-width="180" show-overflow-tooltip />
+        <el-table-column prop="component" label="组件路径(菜单节点需配置)" min-width="180" show-overflow-tooltip />
 
         <el-table-column label="操作" width="220" fixed="right" align="center">
           <template #default="{ row }">
@@ -78,17 +82,35 @@
 
         <!-- 🌟 动态表单联动：目录/菜单 显示图标 -->
         <el-form-item v-if="[1, 2].includes(formData.permissionType)" label="菜单图标">
-          <el-input v-model="formData.icon" placeholder="请输入 Element Plus 图标名，如: Setting" />
+          <el-select v-model="formData.icon" filterable clearable placeholder="请选择或搜索图标" style="width: 100%;">
+            <el-option v-for="iconName in iconList" :key="iconName" :label="iconName" :value="iconName">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <el-icon :size="18"><component :is="iconName" /></el-icon>
+                <span>{{ iconName }}</span>
+              </div>
+            </el-option>
+          </el-select>
         </el-form-item>
 
         <!-- 🌟 动态表单联动：目录/菜单 显示路由路径 -->
-        <el-form-item v-if="[1, 2].includes(formData.permissionType)" label="路由地址" prop="path">
-          <el-input v-model="formData.path" placeholder="请输入路由路径，如: /purchase/trace" />
+        <el-form-item v-if="[1, 2].includes(formData.permissionType)" label="路由路径" prop="path">
+          <el-input v-model="formData.path" placeholder="请输入路由路径，格式: 根节点为 /purchase, 其他为 trace" />
         </el-form-item>
 
         <!-- 🌟 动态表单联动：仅菜单 显示组件路径 -->
         <el-form-item v-if="formData.permissionType === 2" label="组件路径" prop="component">
           <el-input v-model="formData.component" placeholder="请输入组件路径，如: purchase/trace/IndexView" />
+        </el-form-item>
+
+        <!-- 🌟 新增：仅菜单 显示扩展参数输入框 -->
+        <el-form-item v-if="formData.permissionType === 2" label="扩展参数">
+          <el-input
+            v-model="formData.extInfo"
+            type="textarea"
+            :rows="2"
+            placeholder='请输入 JSON 格式参数，如: {"queryPurchased": true}'
+          />
+          <div class="form-tip">用于多个菜单复用同一个 Vue 组件时传递路由 Meta 参数</div>
         </el-form-item>
 
         <!-- 🌟 动态表单联动：菜单/按钮/字段 显示权限标识 -->
@@ -113,10 +135,14 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { getPermissionTreeApi, savePermissionApi, updatePermissionApi, deletePermissionApi } from '@/api/system/permission'
+
+// 🌟 获取所有的 Element Plus 图标名称列表
+import * as ElementPlusIconsVue from '@element-plus/icons-vue'
+const iconList = Object.keys(ElementPlusIconsVue)
 
 const loading = ref(false)
 const treeData = ref<any[]>([])
@@ -128,6 +154,26 @@ const submitLoading = ref(false)
 const formRef = ref<FormInstance>()
 const parentName = ref('无 / 顶级节点')
 
+
+// 🌟 新增：前端纯计算树形过滤
+const searchQuery = ref('')
+const filteredTreeData = computed(() => {
+  if (!searchQuery.value) return treeData.value
+  const query = searchQuery.value.toLowerCase()
+
+  const filterTree = (nodes: any[]): any[] => {
+    return nodes.map(node => ({ ...node }))
+      .filter(node => {
+        const isMatch = node.permissionName && node.permissionName.toLowerCase().includes(query)
+        if (node.children && node.children.length > 0) {
+          node.children = filterTree(node.children)
+        }
+        return isMatch || (node.children && node.children.length > 0)
+      })
+  }
+  return filterTree(treeData.value)
+})
+
 // 表单数据
 const formData = reactive({
   id: null as number | null,
@@ -138,7 +184,8 @@ const formData = reactive({
   path: '',
   component: '',
   icon: '',
-  sortOrder: 0
+  sortOrder: 0,
+  extInfo: ''
 })
 
 // 🌟 动态校验规则
@@ -190,11 +237,11 @@ const openDialog = (row: any, isEdit = false) => {
     parentName.value = row.parentId === 0 ? '顶级节点' : '请参考列表层级'
   } else {
     dialogTitle.value = '新增节点'
-    // 重置表单
+    // 🌟 重置表单时补充 extInfo
     Object.assign(formData, {
       id: null,
-      parentId: row ? row.id : 0, // 如果是从某行点击新增，那那行就是父节点
-      permissionName: '', permissionCode: '', permissionType: 1, path: '', component: '', icon: '', sortOrder: 0
+      parentId: row ? row.id : 0,
+      permissionName: '', permissionCode: '', permissionType: 1, path: '', component: '', icon: '', sortOrder: 0, extInfo: ''
     })
     parentName.value = row ? row.permissionName : '顶级节点'
   }

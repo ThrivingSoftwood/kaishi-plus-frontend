@@ -51,3 +51,14 @@ export const resetUserPwdApi = (data: UserReq) => {
 export const deleteUserApi = (id: number) => {
   return request.delete<any, string>(`/kaishi/system/user/delete/${id}`)
 }
+
+export const getUserRolesApi = (userId: number) => {
+  return request.get<any, number[]>(`/kaishi/system/user/assigned-roles/${userId}`)
+}
+
+export const assignRolesToUserApi = (data: { id: number; roleIds: number[] }) => {
+  return request.post<any, string>('/kaishi/system/user/assign-roles', data, {
+    // 🌟 同样需要加上请求头，触发后端立即刷新权限
+    headers: { 'X-Update-Perm': 'true' }
+  })
+}

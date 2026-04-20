@@ -6,6 +6,7 @@
       <div class="logo-container">
         <h2 class="logo-text">凯行天下 诗意年华</h2>
       </div>
+      <!--删除 unique-opened,关闭所有 tab 页也不收起菜单-->
       <div class="menu-container">
         <el-menu
           :default-active="route.path"
@@ -13,7 +14,6 @@
           background-color="#141414"
           text-color="#E5EAF3"
           active-text-color="#409EFF"
-          unique-opened
           router
         >
           <!-- 静态系统主页始终保留在最上方 -->
@@ -85,7 +85,8 @@
         <router-view v-slot="{ Component, route }">
           <transition name="fade-transform" mode="out-in">
             <!-- 🌟 史诗级关键：:key="route.path" 强制 Vue 为同一个组件的不同路径创建独立的缓存实例！ -->
-            <keep-alive>
+            <!-- 🌟 加上 :include="tagsStore.cachedViewNames"，实现受控销毁 -->
+            <keep-alive :include="tagsStore.cachedViewNames">
               <component :is="Component" :key="route.path"/>
             </keep-alive>
           </transition>

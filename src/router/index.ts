@@ -25,12 +25,20 @@ export const constantRoutes: RouteRecordRaw[] = [
       // 🌟 将所有不需要在侧边栏显示的隐藏详情页写在这里！
       // 它们会继承 Layout，所以页面上方依然有面包屑，左侧依然有侧边栏
       {
-        path: 'trace/purchase/detail/:vchcode/:dlyorder',
+        path: 'purchase/trace/detail/:vchcode/:dlyorder',
         name: 'TracePurchaseDetail',
         component: () => import('@/views/purchase/trace/DetailView.vue'),
         meta: { title: '入库详情记录' }
       }
     ]
+  },
+  // 🌟 终极防白屏盾牌：通配符路由
+  // pathMatch 是 Vue Router 4 的固定写法，用于捕获所有未定义的路径
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'NotFound',
+    // 这里可以选择跳转到 404 页面，或者是直接重定向到主页
+    redirect: '/placeholder'
   }
 ]
 

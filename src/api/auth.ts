@@ -8,6 +8,8 @@ export interface LoginReq {
 export interface LoginResp {
   token: string
   username: string
+  permissions?: string[]
+  roleCodes?: string[]
 }
 
 export const loginApi = (data: LoginReq) => {

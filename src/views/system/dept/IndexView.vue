@@ -5,16 +5,20 @@
       <template #header>
         <div class="card-header">
           <span>组织架构 (本地映射视图)</span>
-          <el-button type="primary" icon="Refresh" @click="openSyncDialog">
-            同步管家婆部门
-          </el-button>
+          <!-- 🌟 将原本的单个按钮包裹在 flex 容器中，加上搜索框 -->
+          <div style="display: flex; gap: 10px;">
+            <el-input v-model="searchQuery" placeholder="搜索部门名称" clearable prefix-icon="Search" style="width: 200px;" />
+            <el-button type="primary" icon="Refresh" @click="openSyncDialog">
+              同步管家婆部门
+            </el-button>
+          </div>
         </div>
       </template>
 
-      <!-- 🌟 本地部门树形表格 -->
+      <!-- 🌟 将 :data="deptTree" 改为 :data="filteredDeptTree" -->
       <el-table
         v-loading="loading"
-        :data="deptTree"
+        :data="filteredDeptTree"
         row-key="id"
         border
         default-expand-all
@@ -108,7 +112,7 @@
 </template>
 
 <script lang="ts" setup>
-import {onMounted, ref} from 'vue'
+import {onMounted, ref, computed} from 'vue'
 import type {ElTree} from 'element-plus'
 import {ElMessage, ElMessageBox} from 'element-plus'
 import {
@@ -131,6 +135,27 @@ const syncLoading = ref(false)
 const submitSyncLoading = ref(false)
 const unsyncedTree = ref<DepartmentVO[]>([])
 const erpTreeRef = ref<InstanceType<typeof ElTree>>()
+
+// 🌟 新增：前端纯计算树形过滤
+const searchQuery = ref('')
+const filteredDeptTree = computed(() => {
+  if (!searchQuery.value) return deptTree.value
+  const query = searchQuery.value.toLowerCase()
+
+  // 递归拷贝过滤，避免破坏原数组引用
+  const filterTree = (nodes: SysDeptVO[]): SysDeptVO[] => {
+    return nodes.map(node => ({ ...node }))
+      .filter(node => {
+        const isMatch = node.deptName && node.deptName.toLowerCase().includes(query)
+        if (node.children && node.children.length > 0) {
+          node.children = filterTree(node.children)
+        }
+        // 只要自己匹配，或者有存活的子节点，就保留该节点
+        return isMatch || (node.children && node.children.length > 0)
+      })
+  }
+  return filterTree(deptTree.value)
+})
 
 // 初始化加载本地树
 const fetchLocalTree = async () => {

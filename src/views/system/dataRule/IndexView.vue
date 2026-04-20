@@ -5,11 +5,17 @@
       <template #header>
         <div class="card-header">
           <span>数据范围规则引擎 (ABAC 策略中心)</span>
-          <el-button type="primary" icon="Plus" @click="openDialog(null)">新建规则</el-button>
+          <!-- 🌟 增加并联搜索框 -->
+          <div style="display: flex; gap: 10px;">
+            <el-input v-model="searchResource" placeholder="搜索目标表/资源" clearable prefix-icon="Search" style="width: 180px;" />
+            <el-input v-model="searchName" placeholder="搜索规则名称" clearable prefix-icon="Search" style="width: 180px;" />
+            <el-button type="primary" icon="Plus" @click="openDialog(null)">新建规则</el-button>
+          </div>
         </div>
       </template>
 
-      <el-table v-loading="loading" :data="ruleList" border stripe height="calc(100vh - 200px)">
+      <!-- 🌟 将 :data="ruleList" 改为 :data="filteredRuleList" -->
+      <el-table v-loading="loading" :data="filteredRuleList" border stripe height="calc(100vh - 200px)">
         <el-table-column type="index" label="序号" width="60" align="center" />
         <el-table-column prop="targetResource" label="受控目标表/资源" width="180">
           <template #default="{ row }">
@@ -55,6 +61,7 @@
 
         <el-form-item label="目标资源" prop="targetResource">
           <!-- 这里的 value 需要与你 MyBatis-Plus 拦截器里提取的 ResourceName 严格匹配 -->
+          <!-- todo 获取目标表 todo 后续有需要扩展成字典表,从后台获取数据后填充到这里 -->
           <el-select v-model="ruleForm.targetResource" placeholder="请选择要挂载拦截器的业务表" style="width: 100%">
             <el-option label="采购订单 (DlyBuy)" value="DlyBuy" />
             <el-option label="库存实绩 (Dlystock)" value="Dlystock" />
@@ -67,7 +74,7 @@
             <el-option label="1 - 全部数据 (不拦截)" :value="1" />
             <el-option label="2 - 仅看本人数据" :value="2" />
             <el-option label="3 - 仅看本部门数据" :value="3" />
-            <el-option label="4 - 看本部门及下属部门" :value="4" />
+            <el-option label="4 - 本部门及下属" :value="4" />
             <el-option label="5 - ⚙️ 高级自定义条件 (可视化生成)" :value="5" />
           </el-select>
         </el-form-item>
@@ -111,13 +118,37 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { getAllDataRulesApi, saveDataRuleApi, deleteDataRuleApi, type DataRuleReq } from '@/api/system/dataRule'
 
 const loading = ref(false)
 const ruleList = ref<any[]>([])
+
+// 🌟 新增：双维度搜索状态
+const searchResource = ref('')
+const searchName = ref('')
+
+/**
+ * 🌟 核心：双维度并联（AND）过滤计算属性
+ * 逻辑：资源匹配 AND 名称匹配
+ */
+const filteredRuleList = computed(() => {
+  return ruleList.value.filter(rule => {
+    const queryRes = searchResource.value.trim().toLowerCase()
+    const queryName = searchName.value.trim().toLowerCase()
+
+    // 1. 受控资源匹配：为空放行，不为空则执行包含检查
+    const matchResource = !queryRes || (rule.targetResource && rule.targetResource.toLowerCase().includes(queryRes))
+
+    // 2. 规则名称匹配：同理
+    const matchName = !queryName || (rule.ruleName && rule.ruleName.toLowerCase().includes(queryName))
+
+    // 3. 并联逻辑
+    return matchResource && matchName
+  })
+})
 
 const fetchRules = async () => {
   loading.value = true
@@ -173,6 +204,7 @@ const openDialog = (row: any) => {
       try {
         conditions.value = JSON.parse(row.customSqlJson)
       } catch (e) {
+        console.error(e)
         conditions.value = [{ column: '', operator: '=', value: '' }]
       }
     } else {

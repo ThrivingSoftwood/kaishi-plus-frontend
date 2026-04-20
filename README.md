@@ -87,3 +87,42 @@
 *   **手动置为完成 (Manual Finish):**
     *   `POST /kaishi/purchase/trace/manual/finish`
     *   **Req:** `ManualFinishReq` (vchType, vchCode, dlyOrder, extInfo)
+
+
+
+```bash
+    
+    # 先列出所有变更文件，然后用grep过滤掉不想看的文件
+    git diff HEAD --name-only | \
+    grep -v 'package-lock.json' | \
+    grep -v 'mybatis' | \
+    grep -v 'spring' | \
+    grep -v '\.properties$' > files_to_diff.txt
+    
+    # 将想要查看的文件中已更改内容导出到 diff.txt
+    git diff HEAD -- $(cat files_to_diff.txt) > diff.txt
+
+    # 显示项目结构
+   tree -I "target|node_modules|.git|out|*.iml|logs|package-info.java|mvnw*|*.md|.git*" --dirsfirst
+   
+   # 输出所有文件内容(排除 .env 文件)
+   find . -type f \
+  -not -path "./dist/*" \
+  -not -path "./node_modules/*" \
+  -not -path "./.git/*" \
+  -not -name ".git*" \
+  -not -name "*.md" \
+  -not -name "pnpm-lock.yaml" \
+  -not -name ".env*" \
+  -not -name "*.ico" \
+  -not -path "*/.idea/*" \
+  -not -name ".DS_Store" \
+  -not -name "*.svg" | while read -r file; do
+    ext="${file##*.}"
+    
+    echo "\nFile: $file"
+    echo "\`\`\`$ext"
+    cat "$file"
+    echo "\`\`\`"
+done
+```
