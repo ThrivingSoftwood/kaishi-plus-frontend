@@ -19,6 +19,10 @@ export default defineConfig({
       dts: 'src/components.d.ts' // 为 TS 生成声明文件
     }),
   ],
+  /* // 增加下面这段 define 配置,可以在生产环境使用 devtool
+  define: {
+    __VUE_PROD_DEVTOOLS__: true, // 强制在生产环境中启用 devtools
+  },*/
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
@@ -54,6 +58,5 @@ export default defineConfig({
     // 🌟 4. 防止将小的静态资源内联为 base64
     // 这样你能清晰地看到静态资源的请求路径
     assetsInlineLimit: 0,
-  }
-   */
+  } */
 })
