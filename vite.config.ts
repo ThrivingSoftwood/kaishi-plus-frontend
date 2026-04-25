@@ -25,7 +25,10 @@ export default defineConfig({
   },*/
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      '@arch': fileURLToPath(new URL('./src/arch', import.meta.url)),
+      '@modules': fileURLToPath(new URL('./src/modules', import.meta.url)),
+      '@shared': fileURLToPath(new URL('./src/shared', import.meta.url))
     }
   },
   server: {

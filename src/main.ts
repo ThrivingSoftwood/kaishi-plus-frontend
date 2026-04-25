@@ -6,9 +6,9 @@ import { createPinia } from 'pinia'
 
 
 import App from './App.vue'
-import router from './router'
+import router from './arch/router'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
-import { hasPerm } from './directives/hasPerm'
+import { hasPerm } from './arch/auth/directive/hasPerm'
 
 const app = createApp(App)
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {

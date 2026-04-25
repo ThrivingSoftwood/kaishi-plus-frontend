@@ -64,7 +64,7 @@
 
 前端所有的 API 请求都通过 axios 封装，自动在 Header 注入 `Authorization: Bearer {token}`，并自动解包后端的 `Result<T>` 结构。
 
-### 3.1 认证模块 (`auth.ts`)
+### 3.1 认证模块 (`api.ts`)
 
 *   **登录 (Login):**
     *   `POST /kaishi/auth/login`
