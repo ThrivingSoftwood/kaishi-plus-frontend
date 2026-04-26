@@ -18,7 +18,9 @@
         >
           <!-- 静态系统主页始终保留在最上方 -->
           <el-menu-item index="/placeholder">
-            <el-icon><HomeFilled /></el-icon>
+            <el-icon>
+              <HomeFilled/>
+            </el-icon>
             <template #title>
               <span>系统主页</span>
             </template>
@@ -44,6 +46,13 @@
 
         <!-- 用户操作下拉菜单 -->
         <div class="header-actions">
+          <!-- 🌟 新增：消息预警小铃铛 -->
+          <div class="message-bell" @click="openMessageDrawer">
+            <el-badge :value="msgStore.unreadCount" :hidden="msgStore.unreadCount === 0" :max="99" class="bell-badge">
+              <el-icon :size="20"><Bell/></el-icon>
+            </el-badge>
+          </div>
+
           <el-dropdown trigger="click" @command="handleCommand">
             <span class="user-dropdown">
               <el-avatar :size="32" :icon="UserFilled" class="user-avatar"/>
@@ -131,17 +140,61 @@
         </span>
       </template>
     </el-dialog>
+
+    <!-- 🌟 消息中心抽屉 -->
+    <el-drawer v-model="msgDrawerVisible" title="消息与预警中心" size="400px" append-to-body>
+      <div class="msg-drawer-container" v-loading="msgLoading">
+        <div class="msg-header">
+          <el-radio-group v-model="msgPage.readStatus" size="small" @change="fetchMessages">
+            <el-radio-button :label="undefined">全部</el-radio-button>
+            <el-radio-button :label="0">未读</el-radio-button>
+            <el-radio-button :label="1">已读</el-radio-button>
+          </el-radio-group>
+          <el-button type="primary" link size="small" @click="handleReadAll" :disabled="msgStore.unreadCount === 0">
+            全部已读
+          </el-button>
+        </div>
+
+        <div class="msg-list" v-if="msgList.length > 0">
+          <div v-for="msg in msgList" :key="msg.id" class="msg-item" :class="{ 'read-status': msg.readStatus === 1 }" @click="handleRead(msg)">
+            <div class="msg-item-header">
+              <el-tag :type="msg.msgType === 1 ? 'warning' : 'info'" size="small" effect="dark">
+                {{ msg.msgType === 1 ? '预警' : '通知' }}
+              </el-tag>
+              <span class="msg-title">{{ msg.title }}</span>
+              <span v-if="msg.readStatus === 0" class="unread-dot"></span>
+            </div>
+            <div class="msg-content">{{ msg.content }}</div>
+            <div class="msg-time">{{ formatTime(msg.createTime) }}</div>
+          </div>
+        </div>
+        <el-empty v-else description="暂无消息记录" :image-size="100" />
+      </div>
+
+      <template #footer>
+        <el-pagination
+          small
+          layout="prev, pager, next"
+          :total="msgTotal"
+          v-model:current-page="msgPage.pageNo"
+          :page-size="msgPage.pageSize"
+          @current-change="handleMsgPageChange"
+          class="msg-pagination"
+        />
+      </template>
+    </el-drawer>
   </div>
 </template>
 <script lang="ts" setup>
-import {reactive, ref, watch} from 'vue'
+import {reactive, ref, watch, onMounted} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
 import {
   ArrowDown,
   Lock,
   HomeFilled,
   SwitchButton,
-  UserFilled
+  UserFilled,
+  Bell
 } from '@element-plus/icons-vue'
 import type {FormInstance, FormRules, TabsPaneContext} from 'element-plus'
 import {ElMessage, ElMessageBox, type TabPaneName} from 'element-plus'
@@ -149,9 +202,15 @@ import {useAuthStore} from '@/arch/auth/store/store'
 import {encryptPassword} from '@/arch/request/crypto'
 import {useTagsStore} from '@/arch/layout/store'
 import SidebarItem from '@/arch/layout/components/SidebarItem.vue'
-import { usePermissionStore } from '@/arch/router/dynamic'
+import {usePermissionStore} from '@/arch/router/dynamic'
 import type {ChangePwdReq} from "@/arch/auth/type/changePwdReq.ts";
 import {changePasswordApi} from "@/arch/auth/api/api.ts";
+
+// 2. 引入我们刚写的 messageStore 和 API
+import { useMessageStore } from '@/arch/message/store/message'
+import { pageMessagesApi, markAsReadApi, markAllAsReadApi } from '@/arch/message/api/message'
+// 如果没有装 dayjs，可以用原生 Date，这里建议格式化时间
+import dayjs from 'dayjs'
 
 const permissionStore = usePermissionStore()
 
@@ -163,6 +222,27 @@ const tagsStore = useTagsStore()
 
 // 激活的 Tab 路径
 const activeTabPath = ref(route.path)
+
+const msgStore = useMessageStore()
+
+// 🌟 新增：消息抽屉状态与分页数据
+const msgDrawerVisible = ref(false)
+const msgList = ref<any[]>([])
+const msgLoading = ref(false)
+const msgTotal = ref(0)
+const msgPage = reactive({ pageNo: 1, pageSize: 15, readStatus: undefined as number | undefined })
+
+
+const formatTime = (time: string) => {
+  return dayjs(time).format('YYYY-MM-DD HH:mm:ss')
+}
+
+// 🌟 生命周期接入
+onMounted(async () => {
+  // 启动消息引擎
+  await msgStore.fetchUnreadCount()
+  msgStore.connectSse()
+})
 
 // 监听路由变化，自动添加 Tab
 watch(
@@ -215,6 +295,8 @@ const handleLogout = () => {
     cancelButtonText: '取消',
     type: 'warning',
   }).then(() => {
+    // 👈 切断长连接
+    msgStore.disconnectSse()
     // 调用 Pinia 中的清理方法
     authStore.clearAuth()
     ElMessage.success('已安全退出')
@@ -222,6 +304,46 @@ const handleLogout = () => {
     router.push({name: 'Login'})
   }).catch(() => {
   })
+}
+
+
+
+// 🌟 打开抽屉并加载数据
+const openMessageDrawer = () => {
+  msgDrawerVisible.value = true
+  fetchMessages()
+}
+
+const fetchMessages = async () => {
+  msgLoading.value = true
+  try {
+    const res = await pageMessagesApi(msgPage)
+    msgList.value = res.records ||[]
+    msgTotal.value = res.total || 0
+  } finally {
+    msgLoading.value = false
+  }
+}
+
+// 🌟 标记已读交互
+const handleRead = async (row: any) => {
+  if (row.readStatus === 1) return
+  await markAsReadApi(row.id)
+  row.readStatus = 1
+  msgStore.unreadCount = Math.max(0, msgStore.unreadCount - 1)
+}
+
+const handleReadAll = async () => {
+  if (msgStore.unreadCount === 0) return
+  await markAllAsReadApi()
+  msgStore.unreadCount = 0
+  ElMessage.success('全部标记已读')
+  fetchMessages()
+}
+
+const handleMsgPageChange = (val: number) => {
+  msgPage.pageNo = val
+  fetchMessages()
 }
 
 // ================= 修改密码逻辑 =================
@@ -459,5 +581,101 @@ const submitChangePwd = async () => {
 
 :deep(.custom-tabs .el-tabs__item:hover) {
   color: #409EFF;
+}
+/* ====== 消息小铃铛样式 ====== */
+.message-bell {
+  margin-right: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  color: var(--el-text-color-regular);
+  transition: color 0.3s;
+}
+
+.message-bell:hover {
+  color: var(--el-color-primary);
+}
+
+:deep(.bell-badge .el-badge__content.is-fixed) {
+  top: 0;
+  right: 6px;
+}
+
+/* ====== 消息抽屉样式 ====== */
+.msg-drawer-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.msg-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.msg-list {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.msg-item {
+  background-color: var(--el-bg-color-overlay);
+  border: 1px solid var(--el-border-color-darker);
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.msg-item:hover {
+  border-color: var(--el-color-primary);
+}
+
+.msg-item.read-status {
+  opacity: 0.6; /* 已读变暗 */
+}
+
+.msg-item-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  position: relative;
+}
+
+.msg-title {
+  font-weight: bold;
+  margin-left: 8px;
+  color: var(--el-text-color-primary);
+  font-size: 14px;
+}
+
+.unread-dot {
+  position: absolute;
+  right: 0;
+  width: 8px;
+  height: 8px;
+  background-color: var(--el-color-danger);
+  border-radius: 50%;
+}
+
+.msg-content {
+  font-size: 13px;
+  color: var(--el-text-color-regular);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.msg-time {
+  font-size: 12px;
+  color: var(--el-text-color-placeholder);
+  text-align: right;
+}
+
+.msg-pagination {
+  justify-content: center;
 }
 </style>
