@@ -65,7 +65,7 @@
 
         <el-form-item label="目标资源" prop="targetResource">
           <!-- 这里的 value 需要与你 MyBatis-Plus 拦截器里提取的 ResourceName 严格匹配 -->
-          <!-- todo 获取目标表 todo 后续有需要扩展成字典表,从后台获取数据后填充到这里 -->
+          <!-- todo 获取目标表 后续有需要扩展成字典表,从后台获取数据后填充到这里 -->
           <el-select v-model="ruleForm.targetResource" placeholder="请选择要挂载拦截器的业务表"
                      style="width: 100%">
             <el-option label="采购订单 (DlyBuy)" value="DlyBuy"/>
