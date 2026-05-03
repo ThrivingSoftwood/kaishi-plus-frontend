@@ -1,5 +1,3 @@
-import index from "@/arch/request";
-
 export interface SysDeptVO {
   id: number
   parentId: number

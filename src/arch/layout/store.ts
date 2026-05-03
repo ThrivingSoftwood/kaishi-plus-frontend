@@ -1,6 +1,6 @@
-import { defineStore } from 'pinia'
-import { ref } from 'vue'
-import type { RouteLocationNormalized } from 'vue-router'
+import {defineStore} from 'pinia'
+import {ref} from 'vue'
+import type {RouteLocationNormalized} from 'vue-router'
 
 export interface TagView {
   path: string
@@ -49,5 +49,5 @@ export const useTagsStore = defineStore('tags', () => {
     }
   }
 
-  return { visitedViews, cachedViewNames, addView, delView }
+  return {visitedViews, cachedViewNames, addView, delView}
 })

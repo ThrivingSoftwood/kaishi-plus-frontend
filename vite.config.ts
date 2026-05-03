@@ -1,9 +1,9 @@
-import { fileURLToPath, URL } from 'node:url'
-import { defineConfig } from 'vite'
+import {fileURLToPath, URL} from 'node:url'
+import {defineConfig} from 'vite'
 import vue from '@vitejs/plugin-vue'
 import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
-import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
+import {ElementPlusResolver} from 'unplugin-vue-components/resolvers'
 
 export default defineConfig({
   plugins: [
@@ -11,12 +11,15 @@ export default defineConfig({
     AutoImport({
       resolvers: [ElementPlusResolver()],
       // 自动导入 Vue 和 Vue-Router 的 API，无需手动 import ref, reactive 等
-      imports:['vue', 'vue-router', 'pinia'],
+      imports: ['vue', 'vue-router', 'pinia'],
       dts: 'src/auto-imports.d.ts' // 为 TS 生成声明文件
     }),
     Components({
       resolvers: [ElementPlusResolver()],
-      dts: 'src/components.d.ts' // 为 TS 生成声明文件
+      // 🌟 核心修改：显式指定需要自动扫描的组件目录
+      dirs: ['src/*/components'],
+      // 为 TS 生成声明文件
+      dts: 'src/components.d.ts'
     }),
   ],
   /* // 增加下面这段 define 配置,可以在生产环境使用 devtool

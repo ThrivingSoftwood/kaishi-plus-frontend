@@ -1,5 +1,3 @@
-
-
 // 混合树节点 VO
 import index from "@/arch/request";
 import type {OrgNodeVO} from "@/modules/system/type/orgNodeVO.ts";
@@ -32,7 +30,7 @@ export const getUserRolesApi = (userId: number) => {
 export const assignRolesToUserApi = (data: { id: number; roleIds: number[] }) => {
   return index.post<any, string>('/system/user/assign-roles', data, {
     // 🌟 同样需要加上请求头，触发后端立即刷新权限
-    headers: { 'X-Update-Perm': 'true' }
+    headers: {'X-Update-Perm': 'true'}
   })
 }
 

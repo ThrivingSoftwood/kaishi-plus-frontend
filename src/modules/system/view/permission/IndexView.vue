@@ -1,13 +1,14 @@
 <template>
   <div class="permission-container">
-    <el-card shadow="never" class="table-card">
+    <el-card class="table-card" shadow="never">
       <template #header>
         <div class="card-header">
           <span>菜单与资源权限管理</span>
           <!-- 🌟 增加搜索框 -->
           <div style="display: flex; gap: 10px;">
-            <el-input v-model="searchQuery" placeholder="搜索节点名称" clearable prefix-icon="Search" style="width: 200px;" />
-            <el-button type="primary" icon="Plus" @click="openDialog(null)">新增根节点</el-button>
+            <el-input v-model="searchQuery" clearable placeholder="搜索节点名称"
+                      prefix-icon="Search" style="width: 200px;"/>
+            <el-button icon="Plus" type="primary" @click="openDialog(null)">新增根节点</el-button>
           </div>
         </div>
       </template>
@@ -16,19 +17,21 @@
       <el-table
         v-loading="loading"
         :data="filteredTreeData"
-        row-key="id"
+        :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
         border
         default-expand-all
-        :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
+        row-key="id"
       >
-        <el-table-column prop="permissionName" label="节点名称" min-width="180" />
-        <el-table-column prop="icon" label="图标" width="80" align="center">
+        <el-table-column label="节点名称" min-width="180" prop="permissionName"/>
+        <el-table-column align="center" label="图标" prop="icon" width="80">
           <template #default="{ row }">
-            <el-icon v-if="row.icon" size="18"><component :is="row.icon" /></el-icon>
+            <el-icon v-if="row.icon" size="18">
+              <component :is="row.icon"/>
+            </el-icon>
           </template>
         </el-table-column>
-        <el-table-column prop="sortOrder" label="排序" width="80" align="center" />
-        <el-table-column prop="permissionType" label="类型" width="100" align="center">
+        <el-table-column align="center" label="排序" prop="sortOrder" width="80"/>
+        <el-table-column align="center" label="类型" prop="permissionType" width="100">
           <template #default="{ row }">
             <el-tag v-if="row.permissionType === 1" type="info">目录</el-tag>
             <el-tag v-else-if="row.permissionType === 2" type="success">菜单</el-tag>
@@ -36,21 +39,22 @@
             <el-tag v-else-if="row.permissionType === 5" type="danger">数据列</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="permissionCode" label="权限标识(目录节点无需配置)" min-width="180" />
-        <el-table-column prop="path" label="路由路径" min-width="150" show-overflow-tooltip />
-        <el-table-column prop="component" label="组件路径(菜单节点需配置)" min-width="180" show-overflow-tooltip />
+        <el-table-column label="权限标识(目录节点无需配置)" min-width="180" prop="permissionCode"/>
+        <el-table-column label="路由路径" min-width="150" prop="path" show-overflow-tooltip/>
+        <el-table-column label="组件路径(菜单节点需配置)" min-width="180" prop="component"
+                         show-overflow-tooltip/>
 
-        <el-table-column label="操作" width="220" fixed="right" align="center">
+        <el-table-column align="center" fixed="right" label="操作" width="220">
           <template #default="{ row }">
             <!-- 按钮和列字段不允许再添加子节点 -->
             <el-button v-if="row.permissionType === 1 || row.permissionType === 2"
-                       type="primary" link icon="Plus" @click="openDialog(row)">
+                       icon="Plus" link type="primary" @click="openDialog(row)">
               新增
             </el-button>
-            <el-button type="primary" link icon="Edit" @click="openDialog(row, true)">
+            <el-button icon="Edit" link type="primary" @click="openDialog(row, true)">
               修改
             </el-button>
-            <el-button type="danger" link icon="Delete" @click="handleDelete(row)">
+            <el-button icon="Delete" link type="danger" @click="handleDelete(row)">
               删除
             </el-button>
           </template>
@@ -59,12 +63,12 @@
     </el-card>
 
     <!-- 新增/修改弹窗 -->
-    <el-dialog :title="dialogTitle" v-model="dialogVisible" width="550px" destroy-on-close>
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" destroy-on-close width="550px">
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px">
 
         <el-form-item label="上级节点">
           <!-- 这里实际开发可以用 el-tree-select 选父节点，这里简单展示父节点名称 -->
-          <el-input v-model="parentName" disabled />
+          <el-input v-model="parentName" disabled/>
         </el-form-item>
 
         <el-form-item label="节点类型" prop="permissionType">
@@ -77,15 +81,19 @@
         </el-form-item>
 
         <el-form-item label="节点名称" prop="permissionName">
-          <el-input v-model="formData.permissionName" placeholder="请输入名称" />
+          <el-input v-model="formData.permissionName" placeholder="请输入名称"/>
         </el-form-item>
 
         <!-- 🌟 动态表单联动：目录/菜单 显示图标 -->
         <el-form-item v-if="[1, 2].includes(formData.permissionType)" label="菜单图标">
-          <el-select v-model="formData.icon" filterable clearable placeholder="请选择或搜索图标" style="width: 100%;">
-            <el-option v-for="iconName in iconList" :key="iconName" :label="iconName" :value="iconName">
+          <el-select v-model="formData.icon" clearable filterable placeholder="请选择或搜索图标"
+                     style="width: 100%;">
+            <el-option v-for="iconName in iconList" :key="iconName" :label="iconName"
+                       :value="iconName">
               <div style="display: flex; align-items: center; gap: 10px;">
-                <el-icon :size="18"><component :is="iconName" /></el-icon>
+                <el-icon :size="18">
+                  <component :is="iconName"/>
+                </el-icon>
                 <span>{{ iconName }}</span>
               </div>
             </el-option>
@@ -94,40 +102,43 @@
 
         <!-- 🌟 动态表单联动：目录/菜单 显示路由路径 -->
         <el-form-item v-if="[1, 2].includes(formData.permissionType)" label="路由路径" prop="path">
-          <el-input v-model="formData.path" placeholder="请输入路由路径，格式: 根节点为 /purchase, 其他为 trace" />
+          <el-input v-model="formData.path"
+                    placeholder="请输入路由路径，格式: 根节点为 /purchase, 其他为 trace"/>
         </el-form-item>
 
         <!-- 🌟 动态表单联动：仅菜单 显示组件路径 -->
         <el-form-item v-if="formData.permissionType === 2" label="组件路径" prop="component">
-          <el-input v-model="formData.component" placeholder="请输入组件路径，如: purchase/trace/IndexView" />
+          <el-input v-model="formData.component"
+                    placeholder="请输入组件路径，如: purchase/trace/IndexView"/>
         </el-form-item>
 
         <!-- 🌟 新增：仅菜单 显示扩展参数输入框 -->
         <el-form-item v-if="formData.permissionType === 2" label="扩展参数">
           <el-input
             v-model="formData.extInfo"
-            type="textarea"
             :rows="2"
             placeholder='请输入 JSON 格式参数，如: {"queryPurchased": true}'
+            type="textarea"
           />
           <div class="form-tip">用于多个菜单复用同一个 Vue 组件时传递路由 Meta 参数</div>
         </el-form-item>
 
         <!-- 🌟 动态表单联动：菜单/按钮/字段 显示权限标识 -->
-        <el-form-item v-if="[2, 3, 5].includes(formData.permissionType)" label="权限标识" prop="permissionCode">
-          <el-input v-model="formData.permissionCode" placeholder="如: purchase:price:view" />
+        <el-form-item v-if="[2, 3, 5].includes(formData.permissionType)" label="权限标识"
+                      prop="permissionCode">
+          <el-input v-model="formData.permissionCode" placeholder="如: purchase:price:view"/>
           <div class="form-tip">后端校验或前端控制 UI 显示的唯一依据</div>
         </el-form-item>
 
         <el-form-item label="显示排序" prop="sortOrder">
-          <el-input-number v-model="formData.sortOrder" :min="0" controls-position="right" />
+          <el-input-number v-model="formData.sortOrder" :min="0" controls-position="right"/>
         </el-form-item>
       </el-form>
 
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" :loading="submitLoading" @click="submitForm">确定</el-button>
+          <el-button :loading="submitLoading" type="primary" @click="submitForm">确定</el-button>
         </span>
       </template>
     </el-dialog>
@@ -135,13 +146,19 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, onMounted, computed } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import type { FormInstance, FormRules } from 'element-plus'
-import { getPermissionTreeApi, savePermissionApi, updatePermissionApi, deletePermissionApi } from '@/modules/system/api/permission'
+import {computed, onMounted, reactive, ref} from 'vue'
+import type {FormInstance, FormRules} from 'element-plus'
+import {ElMessage, ElMessageBox} from 'element-plus'
+import {
+  deletePermissionApi,
+  getPermissionTreeApi,
+  savePermissionApi,
+  updatePermissionApi
+} from '@/modules/system/api/permission'
 
 // 🌟 获取所有的 Element Plus 图标名称列表
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
+
 const iconList = Object.keys(ElementPlusIconsVue)
 
 const loading = ref(false)
@@ -162,7 +179,7 @@ const filteredTreeData = computed(() => {
   const query = searchQuery.value.toLowerCase()
 
   const filterTree = (nodes: any[]): any[] => {
-    return nodes.map(node => ({ ...node }))
+    return nodes.map(node => ({...node}))
       .filter(node => {
         const isMatch = node.permissionName && node.permissionName.toLowerCase().includes(query)
         if (node.children && node.children.length > 0) {
@@ -190,12 +207,12 @@ const formData = reactive({
 
 // 🌟 动态校验规则
 const formRules = reactive<FormRules>({
-  permissionName: [{ required: true, message: '节点名称不能为空', trigger: 'blur' }],
+  permissionName: [{required: true, message: '节点名称不能为空', trigger: 'blur'}],
   // 菜单必须要有路由和组件路径
-  path: [{ required: true, message: '路由地址不能为空', trigger: 'blur' }],
-  component: [{ required: true, message: '组件路径不能为空', trigger: 'blur' }],
+  path: [{required: true, message: '路由地址不能为空', trigger: 'blur'}],
+  component: [{required: true, message: '组件路径不能为空', trigger: 'blur'}],
   // 按钮和字段必须要有权限标识
-  permissionCode: [{ required: true, message: '权限标识不能为空', trigger: 'blur' }]
+  permissionCode: [{required: true, message: '权限标识不能为空', trigger: 'blur'}]
 })
 
 // 初始化获取树
@@ -241,7 +258,14 @@ const openDialog = (row: any, isEdit = false) => {
     Object.assign(formData, {
       id: null,
       parentId: row ? row.id : 0,
-      permissionName: '', permissionCode: '', permissionType: 1, path: '', component: '', icon: '', sortOrder: 0, extInfo: ''
+      permissionName: '',
+      permissionCode: '',
+      permissionType: 1,
+      path: '',
+      component: '',
+      icon: '',
+      sortOrder: 0,
+      extInfo: ''
     })
     parentName.value = row ? row.permissionName : '顶级节点'
   }
@@ -274,7 +298,7 @@ const handleDelete = (row: any) => {
   if (row.children && row.children.length > 0) {
     return ElMessage.warning('请先删除该节点下的所有子节点！')
   }
-  ElMessageBox.confirm(`确定要删除【${row.permissionName}】吗？`, '警告', { type: 'warning' })
+  ElMessageBox.confirm(`确定要删除【${row.permissionName}】吗？`, '警告', {type: 'warning'})
     .then(async () => {
       await deletePermissionApi(row.id)
       ElMessage.success('删除成功')
@@ -288,12 +312,14 @@ const handleDelete = (row: any) => {
   padding: 0;
   height: 100%;
 }
+
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   font-weight: bold;
 }
+
 .form-tip {
   font-size: 12px;
   color: #909399;

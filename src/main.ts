@@ -1,14 +1,13 @@
 import 'element-plus/dist/index.css'
 import 'element-plus/theme-chalk/dark/css-vars.css' // 👈 新增：引入暗黑模式变量
-
-import { createApp } from 'vue'
-import { createPinia } from 'pinia'
+import {createApp} from 'vue'
+import {createPinia} from 'pinia'
 
 
 import App from './App.vue'
 import router from './arch/router'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
-import { hasPerm } from './arch/auth/directive/hasPerm'
+import {hasPerm} from './arch/auth/directive/hasPerm'
 
 const app = createApp(App)
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {

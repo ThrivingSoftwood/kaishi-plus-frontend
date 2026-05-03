@@ -1,8 +1,8 @@
-import { defineStore } from 'pinia'
-import { ref } from 'vue'
-import { ElNotification } from 'element-plus'
-import { getUnreadCountApi } from '@/arch/message/api/message'
-import { useAuthStore } from '@/arch/auth/store/store'
+import {defineStore} from 'pinia'
+import {ref} from 'vue'
+import {ElNotification} from 'element-plus'
+import {getUnreadCountApi} from '@/arch/message/api/message'
+import {useAuthStore} from '@/arch/auth/store/store'
 
 export const useMessageStore = defineStore('message', () => {
   const unreadCount = ref<number>(0)

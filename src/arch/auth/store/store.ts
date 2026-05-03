@@ -1,5 +1,5 @@
-import { defineStore } from 'pinia'
-import { computed, ref } from 'vue'
+import {defineStore} from 'pinia'
+import {computed, ref} from 'vue'
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref<string>(localStorage.getItem('kaishi_token') || '')
@@ -21,7 +21,7 @@ export const useAuthStore = defineStore('auth', () => {
     return permissions.value.includes(permCode);
   }
 
-  function setAuthInfo(newToken: string, newLoginAccount: string, newUsername: string, newPerms: string[] =[], newRoles: string[] = []) {
+  function setAuthInfo(newToken: string, newLoginAccount: string, newUsername: string, newPerms: string[] = [], newRoles: string[] = []) {
     token.value = newToken
     loginAccount.value = newLoginAccount
     username.value = newUsername
@@ -49,5 +49,16 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('kaishi_roles')
   }
 
-  return { token, loginAccount, username, permissions, roleCodes, godMode, isAuthenticated, hasPermission, setAuthInfo, clearAuth}
+  return {
+    token,
+    loginAccount,
+    username,
+    permissions,
+    roleCodes,
+    godMode,
+    isAuthenticated,
+    hasPermission,
+    setAuthInfo,
+    clearAuth
+  }
 })

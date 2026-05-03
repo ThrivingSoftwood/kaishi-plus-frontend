@@ -1,5 +1,5 @@
-import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
-import { useAuthStore } from '../auth/store/store'
+import {createRouter, createWebHistory, type RouteRecordRaw} from 'vue-router'
+import {useAuthStore} from '../auth/store/store'
 import {usePermissionStore} from "@/arch/router/dynamic.ts";
 import Layout from '@/arch/layout/IndexView.vue'
 
@@ -20,7 +20,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         path: '/placeholder',
         name: 'Placeholder',
         component: () => import('@/shared/components/PlaceholderView.vue'),
-        meta: { title: '欢迎页' }
+        meta: {title: '欢迎页'}
       },
       // 🌟 将所有不需要在侧边栏显示的隐藏详情页写在这里！
       // 它们会继承 Layout，所以页面上方依然有面包屑，左侧依然有侧边栏
@@ -28,7 +28,32 @@ export const constantRoutes: RouteRecordRaw[] = [
         path: 'purchase/trace/detail/:vchcode/:dlyorder',
         name: 'TracePurchaseDetail',
         component: () => import('@/modules/purchase/view/trace/DetailView.vue'),
-        meta: { title: '入库详情记录' }
+        meta: {title: '入库详情记录'}
+      },
+      {
+        path: 'edongfang/product/detail/:mode/:sku?',
+        name: 'EdongfangProductDetail',
+        component: () => import('@/modules/edongfang/product/view/DetailView.vue'),
+        meta: {title: '商品明细管理'}
+      },
+      {
+        path: 'edongfang/order/detail/:eOrderId',
+        name: 'EdongfangOrderDetail',
+        component: () => import('@/modules/edongfang/order/view/DetailView.vue'),
+        meta: {title: '明细'}
+      },
+      {
+        path: 'edongfang/order/detail/item-detail/:pk',
+        name: 'EdongfangOrderItemDetail',
+        component: () => import('@/modules/edongfang/order/view/OrderItemDetailView.vue'),
+        meta: {title: '商品明细'}
+      },
+      {
+        // 🌟 核心修复：增加 :mode 参数，并在 :pk 后面加上问号 (?) 表示可选参数
+        path: 'edongfang/logistics/detail/:mode/:pk?',
+        name: 'EdongfangLogisticsDetail',
+        component: () => import('@/modules/edongfang/logistics/view/DetailView.vue'),
+        meta: {title: '发货已确认明细'}
       }
     ]
   },
@@ -55,14 +80,14 @@ router.beforeEach(async (to, from, next) => {
 
   if (to.name === 'Login') {
     if (isLogin) {
-      next({ path: '/' })
+      next({path: '/'})
     } else {
       next()
     }
   } else {
     if (!isLogin) {
       // 未登录，拦截
-      next({ name: 'Login' })
+      next({name: 'Login'})
     } else {
       // 🌟 核心拦截逻辑：已登录，但动态路由还没加载
       if (!permissionStore.isRoutesLoaded) {
@@ -82,7 +107,7 @@ router.beforeEach(async (to, from, next) => {
 
         // 4. 🚨 终极防坑：触发重定向，确保刚刚 addRoute 的地址能被正确解析
         // replace: true 确保浏览器历史记录不会多出一条奇怪的记录
-        next({ ...to, replace: true })
+        next({...to, replace: true})
       } else {
         // 路由已加载，正常放行
         next()

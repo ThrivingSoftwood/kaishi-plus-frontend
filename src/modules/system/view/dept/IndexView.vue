@@ -1,14 +1,15 @@
 <template>
   <div class="app-container">
     <!-- 1. 主控制区与本地部门树 -->
-    <el-card shadow="never" class="table-card">
+    <el-card class="table-card" shadow="never">
       <template #header>
         <div class="card-header">
           <span>组织架构 (本地映射视图)</span>
           <!-- 🌟 将原本的单个按钮包裹在 flex 容器中，加上搜索框 -->
           <div style="display: flex; gap: 10px;">
-            <el-input v-model="searchQuery" placeholder="搜索部门名称" clearable prefix-icon="Search" style="width: 200px;" />
-            <el-button type="primary" icon="Refresh" @click="openSyncDialog">
+            <el-input v-model="searchQuery" clearable placeholder="搜索部门名称"
+                      prefix-icon="Search" style="width: 200px;"/>
+            <el-button icon="Refresh" type="primary" @click="openSyncDialog">
               同步管家婆部门
             </el-button>
           </div>
@@ -19,26 +20,26 @@
       <el-table
         v-loading="loading"
         :data="filteredDeptTree"
-        row-key="id"
+        :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
         border
         default-expand-all
-        :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
+        row-key="id"
       >
-        <el-table-column prop="deptName" label="部门名称" min-width="200"/>
+        <el-table-column label="部门名称" min-width="200" prop="deptName"/>
 
-        <el-table-column prop="oriDepartmentTypeid" label="管家婆来源ID" width="180" align="center">
+        <el-table-column align="center" label="管家婆来源ID" prop="oriDepartmentTypeid" width="180">
           <template #default="{ row }">
             <el-tag size="small" type="info">{{ row.oriDepartmentTypeid }}</el-tag>
           </template>
         </el-table-column>
 
         <!-- 快速编辑：排序号 -->
-        <el-table-column prop="sortOrder" label="排序" width="150" align="center">
+        <el-table-column align="center" label="排序" prop="sortOrder" width="150">
           <template #default="{ row }">
             <el-input-number
               v-model="row.sortOrder"
-              :min="0"
               :max="999"
+              :min="0"
               controls-position="right"
               size="small"
               style="width: 100px;"
@@ -48,7 +49,7 @@
         </el-table-column>
 
         <!-- 快速编辑：状态开关 -->
-        <el-table-column prop="status" label="状态" width="100" align="center">
+        <el-table-column align="center" label="状态" prop="status" width="100">
           <template #default="{ row }">
             <el-switch
               v-model="row.status"
@@ -60,9 +61,9 @@
         </el-table-column>
 
         <!-- 操作列 -->
-        <el-table-column label="操作" width="120" fixed="right" align="center">
+        <el-table-column align="center" fixed="right" label="操作" width="120">
           <template #default="{ row }">
-            <el-button type="danger" link icon="Delete" @click="handleDelete(row)">
+            <el-button icon="Delete" link type="danger" @click="handleDelete(row)">
               移除映射
             </el-button>
           </template>
@@ -72,10 +73,10 @@
 
     <!-- 2. 🌟 管家婆待同步部门弹窗 -->
     <el-dialog
-      title="从管家婆引入新部门"
       v-model="syncDialogVisible"
-      width="600px"
       destroy-on-close
+      title="从管家婆引入新部门"
+      width="600px"
     >
       <div v-loading="syncLoading" class="sync-tree-wrapper">
         <div v-if="unsyncedTree.length === 0 && !syncLoading" class="empty-hint">
@@ -88,9 +89,9 @@
           ref="erpTreeRef"
           :data="unsyncedTree"
           :props="{label: 'fullName', children: 'children', disabled: 'synced'}"
+          default-expand-all
           node-key="typeid"
           show-checkbox
-          default-expand-all
         />
       </div>
 
@@ -98,9 +99,9 @@
         <span class="dialog-footer">
           <el-button @click="syncDialogVisible = false">取消</el-button>
           <el-button
-            type="primary"
             :disabled="unsyncedTree.length === 0"
             :loading="submitSyncLoading"
+            type="primary"
             @click="submitSync"
           >
             确认引入勾选部门
@@ -112,7 +113,7 @@
 </template>
 
 <script lang="ts" setup>
-import {onMounted, ref, computed} from 'vue'
+import {computed, onMounted, ref} from 'vue'
 import type {ElTree} from 'element-plus'
 import {ElMessage, ElMessageBox} from 'element-plus'
 import {
@@ -144,7 +145,7 @@ const filteredDeptTree = computed(() => {
 
   // 递归拷贝过滤，避免破坏原数组引用
   const filterTree = (nodes: SysDeptVO[]): SysDeptVO[] => {
-    return nodes.map(node => ({ ...node }))
+    return nodes.map(node => ({...node}))
       .filter(node => {
         const isMatch = node.deptName && node.deptName.toLowerCase().includes(query)
         if (node.children && node.children.length > 0) {
@@ -228,7 +229,7 @@ const submitSync = async () => {
   submitSyncLoading.value = true
   try {
     // 🌟 核心修改：将原来的 typeIds 改为 deptTypeIds，严格对齐后端的 ErpSyncReq
-    await syncDepartmentsApi({ deptTypeIds: allSelectedKeys })
+    await syncDepartmentsApi({deptTypeIds: allSelectedKeys})
 
     ElMessage.success('管家婆部门同步成功！')
     syncDialogVisible.value = false

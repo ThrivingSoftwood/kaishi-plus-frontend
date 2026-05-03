@@ -1,7 +1,3 @@
-
-
-
-
 // 对应后端的 PurchaseTraceVO
 export interface PurchaseTraceVO {
   // 状态展示字段

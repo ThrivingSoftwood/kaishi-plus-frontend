@@ -1,5 +1,5 @@
 // File: ./src/directives/hasPerm.ts
-import type { Directive, DirectiveBinding } from 'vue'
+import type {Directive, DirectiveBinding} from 'vue'
 import {useAuthStore} from "@/arch/auth/store/store.ts";
 
 
@@ -9,14 +9,14 @@ import {useAuthStore} from "@/arch/auth/store/store.ts";
  */
 export const hasPerm: Directive = {
   mounted(el: HTMLElement, binding: DirectiveBinding) {
-    const { value } = binding
+    const {value} = binding
     const authStore = useAuthStore()
 
     // 🌟 上帝模式免疫：超级管理员账号无视一切前端 UI 拦截
     if (authStore.godMode) return
 
     if (value && typeof value === 'string') {
-      const permissions = authStore.permissions ||[]
+      const permissions = authStore.permissions || []
       // 判断是否拥有该权限
       const hasPermission = permissions.includes(value)
 

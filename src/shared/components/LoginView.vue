@@ -19,14 +19,16 @@
         @keyup.enter="handleLogin"
       >
         <el-form-item prop="loginAccount">
-          <el-input v-model.trim="loginForm.loginAccount" ref="accountRef" placeholder="账号" clearable/>
+          <el-input ref="accountRef" v-model.trim="loginForm.loginAccount" clearable
+                    placeholder="账号"/>
         </el-form-item>
         <el-form-item prop="password">
-          <el-input v-model="loginForm.password" ref="passwordRef" type="password" placeholder="密码" show-password
-                    oncopy="return false" oncut="return false"/>
+          <el-input ref="passwordRef" v-model="loginForm.password" oncopy="return false"
+                    oncut="return false" placeholder="密码"
+                    show-password type="password"/>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" style="width: 100%; margin-top: 10px;" :loading="isLoading"
+          <el-button :loading="isLoading" style="width: 100%; margin-top: 10px;" type="primary"
                      @click="handleLogin">
             登 录
           </el-button>
@@ -38,7 +40,7 @@
 
 <script lang="ts" setup>
 // 这里的 JS 逻辑保持你原来的不变，无需改动
-import {onMounted, reactive, ref, nextTick} from 'vue'
+import {nextTick, onMounted, reactive, ref} from 'vue'
 import {useRouter} from 'vue-router'
 import type {FormInstance, FormRules} from 'element-plus'
 import {ElMessage} from 'element-plus'

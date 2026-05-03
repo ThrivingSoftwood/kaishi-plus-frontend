@@ -10,8 +10,12 @@ export const getUnreadCountApi = () => {
 }
 
 // 分页获取历史消息
-export const pageMessagesApi = (params: { pageNo: number; pageSize: number; readStatus?: number }) => {
-  return request.get<any, any>('/kaishi/message/page', { params })
+export const pageMessagesApi = (params: {
+  pageNo: number;
+  pageSize: number;
+  readStatus?: number
+}) => {
+  return request.get<any, any>('/kaishi/message/page', {params})
 }
 
 // 标记单条已读

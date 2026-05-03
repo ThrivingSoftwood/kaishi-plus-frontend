@@ -1,6 +1,6 @@
-import { defineStore } from 'pinia'
-import { ref, h, defineComponent, defineAsyncComponent } from 'vue'
-import { RouterView, type RouteRecordRaw } from 'vue-router'
+import {defineStore} from 'pinia'
+import {defineAsyncComponent, defineComponent, h, ref} from 'vue'
+import {type RouteRecordRaw, RouterView} from 'vue-router'
 import {useAuthStore} from "../auth/store/store.ts";
 import Layout from '@/arch/layout/IndexView.vue'
 import {getMenusApi, getPermissionTreeApi} from "@/modules/system/api/permission.ts";
@@ -15,7 +15,7 @@ export const usePermissionStore = defineStore('permission', () => {
     const authStore = useAuthStore()
     try {
       const res = await getPermissionTreeApi()
-      const menuRes =  await getMenusApi(authStore.loginAccount)
+      const menuRes = await getMenusApi(authStore.loginAccount)
       const rawMenus = menuRes || []
 
       // 🌟 核心修复 1：计算 fullPath，专供 Element Plus 侧边栏跳转使用
@@ -78,7 +78,7 @@ export const usePermissionStore = defineStore('permission', () => {
         // 顶级目录挂载 Layout；次级目录挂载 RouterView 占位
         route.component = menu.parentId === 0
           ? Layout
-          : () => Promise.resolve({ render: () => h(RouterView) })
+          : () => Promise.resolve({render: () => h(RouterView)})
 
       } else if (menu.permissionType === 2 && menu.component) {
         const safeComponent = menu.component.replace(/^\/+/, '')
@@ -121,5 +121,5 @@ export const usePermissionStore = defineStore('permission', () => {
     isRoutesLoaded.value = false
   }
 
-  return { menus, isRoutesLoaded, generateRoutes, resetRouter }
+  return {menus, isRoutesLoaded, generateRoutes, resetRouter}
 })

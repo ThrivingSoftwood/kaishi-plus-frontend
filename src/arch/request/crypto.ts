@@ -1,4 +1,4 @@
-import { sm4 } from 'sm-crypto'
+import {sm4} from 'sm-crypto'
 
 // 与后端 application-security.yml 中 security.web.key / iv 保持一致
 const WEB_SM4_KEY = import.meta.env.VITE_APP_SM4_KEY || '这里填入你后端的web.key'

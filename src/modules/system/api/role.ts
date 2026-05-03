@@ -1,7 +1,7 @@
 import index from "@/arch/request"
 
 // 定义更新权限的特征请求头常量
-const PERM_UPDATE_HEADER = { 'X-Update-Perm': 'true' }
+const PERM_UPDATE_HEADER = {'X-Update-Perm': 'true'}
 
 /**
  * 获取角色列表 (仅查询，无需请求头)

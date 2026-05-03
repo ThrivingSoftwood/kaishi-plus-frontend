@@ -1,5 +1,3 @@
-
-
 export interface OrgNodeVO {
   id: string
   parentId: string

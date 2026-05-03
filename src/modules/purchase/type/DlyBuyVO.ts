@@ -1,11 +1,9 @@
-
-
 // 2. 响应视图 VO (对应后端的 DlyBuyVO)
 /**
  * 采购订单视图对象 (对应 Java 中的 DlyBuyVO)
  */
 export interface DlyBuyVO {
-  total? :number;
+  total?: number;
 
   // ========================== 1. 状态展示字段 (后端计算) ==========================
 

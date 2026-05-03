@@ -1,13 +1,14 @@
 <template>
   <div class="app-container">
-    <el-card shadow="never" class="table-card">
+    <el-card class="table-card" shadow="never">
       <template #header>
         <div class="card-header">
           <span>用户与组织架构管理</span>
           <!-- 🌟 增加搜索和按钮区域组 -->
           <div style="display: flex; gap: 10px;">
-            <el-input v-model="tableSearchQuery" placeholder="搜索本地部门或人员" clearable prefix-icon="Search" style="width: 200px;" />
-            <el-button type="primary" icon="Download" @click="openSyncDialog">
+            <el-input v-model="tableSearchQuery" clearable placeholder="搜索本地部门或人员"
+                      prefix-icon="Search" style="width: 200px;"/>
+            <el-button icon="Download" type="primary" @click="openSyncDialog">
               引入管家婆人员
             </el-button>
           </div>
@@ -18,23 +19,23 @@
       <el-table
         v-loading="loading"
         :data="filteredUserTree"
-        row-key="id"
+        :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
         border
         default-expand-all
-        :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
+        row-key="id"
       >
         <el-table-column label="名称 (部门/人员)" min-width="250">
           <template #default="{ row }">
             <!-- 🌟 这里的 container 必须保持 inline-flex 或控制好布局 -->
             <div class="org-cell-content">
-              <el-icon v-if="row.nodeType === 1" color="#E6A23C" size="18" class="node-icon">
+              <el-icon v-if="row.nodeType === 1" class="node-icon" color="#E6A23C" size="18">
                 <FolderOpened/>
               </el-icon>
-              <el-icon v-else color="#409EFF" size="18" class="node-icon">
+              <el-icon v-else class="node-icon" color="#409EFF" size="18">
                 <User/>
               </el-icon>
 
-              <span class="node-name" :class="{ 'is-dept': row.nodeType === 1 }">
+              <span :class="{ 'is-dept': row.nodeType === 1 }" class="node-name">
                 {{ row.name }}
                 <!-- 🌟 仅在部门节点后显示人数 -->
                 <span v-if="row.nodeType === 1" class="user-count-badge">
@@ -45,9 +46,9 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="loginCode" label="登录账号 / 员工编号" width="180" align="center"/>
+        <el-table-column align="center" label="登录账号 / 员工编号" prop="loginCode" width="180"/>
 
-        <el-table-column label="状态" width="100" align="center">
+        <el-table-column align="center" label="状态" width="100">
           <template #default="{ row }">
             <!-- 只有用户节点才可以修改状态 -->
             <el-switch
@@ -60,15 +61,16 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="操作" width="280" fixed="right" align="center">
+        <el-table-column align="center" fixed="right" label="操作" width="280">
           <template #default="{ row }">
             <template v-if="row.nodeType === 2">
-              <el-button type="primary" link icon="Key" @click="openRoleDialog(row)">角色</el-button>
-              <el-button type="warning" link icon="Lock" @click="openPwdDialog(row)">重置密码
+              <el-button icon="Key" link type="primary" @click="openRoleDialog(row)">角色
+              </el-button>
+              <el-button icon="Lock" link type="warning" @click="openPwdDialog(row)">重置密码
               </el-button>
 
-              <el-dropdown trigger="click" style="margin-left: 12px; vertical-align: middle;">
-                <el-button type="info" link icon="MoreFilled">更多</el-button>
+              <el-dropdown style="margin-left: 12px; vertical-align: middle;" trigger="click">
+                <el-button icon="MoreFilled" link type="info">更多</el-button>
                 <template #dropdown>
                   <el-dropdown-menu>
                     <el-dropdown-item
@@ -90,10 +92,10 @@
 
     <!-- 在页面底部追加一个分配角色的 Dialog -->
     <el-dialog
-      :title="`为【${currentTargetUserName}】分配角色`"
       v-model="roleDialogVisible"
-      width="500px"
+      :title="`为【${currentTargetUserName}】分配角色`"
       destroy-on-close
+      width="500px"
     >
       <div v-loading="roleDialogLoading">
         <el-checkbox-group v-model="selectedRoleIds">
@@ -109,7 +111,7 @@
       </div>
       <template #footer>
         <el-button @click="roleDialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="roleSubmitLoading" @click="submitAssignRoles">
+        <el-button :loading="roleSubmitLoading" type="primary" @click="submitAssignRoles">
           确定分配
         </el-button>
       </template>
@@ -117,10 +119,10 @@
 
     <!-- 🌟 管家婆人员同步弹窗 -->
     <el-dialog
-      title="从管家婆引入人员"
       v-model="syncDialogVisible"
-      width="600px"
       destroy-on-close
+      title="从管家婆引入人员"
+      width="600px"
     >
       <div v-loading="syncLoading">
         <div v-if="unsyncedTree.length === 0 && !syncLoading" class="empty-hint">
@@ -130,14 +132,14 @@
         <template v-else>
           <!-- 🌟 新增：初始密码设置表单 -->
           <el-form ref="syncFormRef" :model="syncForm" :rules="syncRules" label-width="90px">
-            <el-alert title="勾选部门可自动全选该部门及子部门下的所有人员" type="info" show-icon
-                      style="margin-bottom: 15px;"/>
+            <el-alert show-icon style="margin-bottom: 15px;" title="勾选部门可自动全选该部门及子部门下的所有人员"
+                      type="info"/>
             <el-form-item label="初始密码" prop="initPassword">
               <el-input
                 v-model="syncForm.initPassword"
-                type="password"
-                show-password
                 placeholder="请为本次引入的人员设置统一的初始登录密码"
+                show-password
+                type="password"
               />
             </el-form-item>
           </el-form>
@@ -145,15 +147,16 @@
           <!-- 混合树：移除 disabled 属性绑定，允许部门级联勾选 -->
           <div class="sync-tree-wrapper">
             <!-- 🌟 新增搜索框 -->
-            <el-input v-model="erpSearchQuery" placeholder="输入名称或账号快捷筛选" clearable prefix-icon="Search" style="margin-bottom: 10px;" />
+            <el-input v-model="erpSearchQuery" clearable placeholder="输入名称或账号快捷筛选"
+                      prefix-icon="Search" style="margin-bottom: 10px;"/>
             <el-tree
               ref="erpTreeRef"
               :data="unsyncedTree"
               :filter-node-method="filterErpNode"
               :props="{ label: 'name', children: 'children' }"
+              default-expand-all
               node-key="id"
               show-checkbox
-              default-expand-all
             >
               <!-- 🌟 自定义树节点内容 -->
               <template #default="{ node, data }">
@@ -185,9 +188,9 @@
         <span class="dialog-footer">
           <el-button @click="syncDialogVisible = false">取消</el-button>
           <el-button
-            type="primary"
             :disabled="unsyncedTree.length === 0"
             :loading="submitSyncLoading"
+            type="primary"
             @click="submitSync"
           >
             确认引入并开通账号
@@ -198,18 +201,18 @@
 
 
     <!-- 🌟 重置密码弹窗 -->
-    <el-dialog title="强制重置密码" v-model="pwdDialogVisible" width="400px" destroy-on-close>
+    <el-dialog v-model="pwdDialogVisible" destroy-on-close title="强制重置密码" width="400px">
       <el-form ref="pwdFormRef" :model="pwdForm" :rules="pwdRules" label-width="80px">
-        <el-alert title="重置后用户将立刻被强制下线" type="warning" show-icon
-                  style="margin-bottom: 15px;"/>
+        <el-alert show-icon style="margin-bottom: 15px;" title="重置后用户将立刻被强制下线"
+                  type="warning"/>
         <el-form-item label="新密码" prop="newPassword">
-          <el-input v-model="pwdForm.newPassword" type="password" show-password
-                    placeholder="请输入不少于6位的新密码"/>
+          <el-input v-model="pwdForm.newPassword" placeholder="请输入不少于6位的新密码" show-password
+                    type="password"/>
         </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="pwdDialogVisible = false">取消</el-button>
-        <el-button type="danger" :loading="pwdSubmitLoading" @click="submitResetPwd">确认重置
+        <el-button :loading="pwdSubmitLoading" type="danger" @click="submitResetPwd">确认重置
         </el-button>
       </template>
     </el-dialog>
@@ -218,27 +221,26 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, reactive, ref, watch, computed } from 'vue'
-import type { ElTree, FormInstance, FormRules } from 'element-plus'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { Folder, FolderOpened, User } from '@element-plus/icons-vue'
-import { encryptPassword } from '@/arch/request/crypto'
+import {computed, onMounted, reactive, ref, watch} from 'vue'
+import type {ElTree, FormInstance, FormRules} from 'element-plus'
+import {ElMessage, ElMessageBox} from 'element-plus'
+import {Folder, FolderOpened, User} from '@element-plus/icons-vue'
+import {encryptPassword} from '@/arch/request/crypto'
 
 // 🌟 引入用户相关 API
 import {
+  assignRolesToUserApi,
   deleteUserApi,
   getErpUnsyncedUserTreeApi,
   getSystemUserTreeApi,
+  getUserRolesApi,
   resetUserPwdApi,
   syncUsersApi,
-  updateUserApi,
-  // 以下为新增 API
-  getUserRolesApi,
-  assignRolesToUserApi
+  updateUserApi
 } from '@/modules/system/api/user'
 
 // 🌟 引入角色相关 API (用于拉取角色备选列表)
-import { getRolesApi } from '@/modules/system/api/role'
+import {getRolesApi} from '@/modules/system/api/role'
 import type {OrgNodeVO} from "@/modules/system/type/orgNodeVO.ts";
 
 // --- 1. 主页面基础状态 ---
@@ -253,7 +255,7 @@ const filteredUserTree = computed(() => {
   const query = tableSearchQuery.value.toLowerCase()
 
   const filterTree = (nodes: OrgNodeVO[]): OrgNodeVO[] => {
-    return nodes.map(node => ({ ...node })) // 浅拷贝一层，防止修改原数据引用
+    return nodes.map(node => ({...node})) // 浅拷贝一层，防止修改原数据引用
       .filter(node => {
         // 1. 检查自己是否匹配
         const isMatch = node.name.toLowerCase().includes(query) ||
@@ -294,7 +296,7 @@ const extractUserId = (nodeId: string): number => {
 const handleStatusChange = async (row: OrgNodeVO) => {
   const realId = extractUserId(row.id)
   try {
-    await updateUserApi({ id: realId, status: row.status })
+    await updateUserApi({id: realId, status: row.status})
     ElMessage.success(row.status === 1 ? '账号已启用' : '账号已停用，用户将被强制下线')
   } catch (error) {
     console.error(error)
@@ -305,7 +307,7 @@ const handleStatusChange = async (row: OrgNodeVO) => {
 
 // 删除账号逻辑
 const handleDelete = (row: OrgNodeVO) => {
-  ElMessageBox.confirm(`确定要彻底移除用户【${row.name}】吗？该操作不可逆！`, '高危操作', { type: 'error' })
+  ElMessageBox.confirm(`确定要彻底移除用户【${row.name}】吗？该操作不可逆！`, '高危操作', {type: 'error'})
     .then(async () => {
       const realId = extractUserId(row.id)
       const msg = await deleteUserApi(realId)
@@ -389,11 +391,11 @@ const unsyncedTree = ref<OrgNodeVO[]>([])
 const erpTreeRef = ref<InstanceType<typeof ElTree>>()
 // --- 🌟 同步弹窗状态扩展 ---
 const syncFormRef = ref<FormInstance>()
-const syncForm = reactive({ initPassword: '' })
+const syncForm = reactive({initPassword: ''})
 const syncRules = reactive<FormRules>({
   initPassword: [
-    { required: true, message: '必须设置初始密码', trigger: 'blur' },
-    { min: 6, message: '密码长度不能少于6位', trigger: 'blur' }
+    {required: true, message: '必须设置初始密码', trigger: 'blur'},
+    {min: 6, message: '密码长度不能少于6位', trigger: 'blur'}
   ]
 })
 
@@ -467,11 +469,11 @@ const submitSync = async () => {
 const pwdDialogVisible = ref(false)
 const pwdSubmitLoading = ref(false)
 const pwdFormRef = ref<FormInstance>()
-const pwdForm = reactive({ newPassword: '' })
+const pwdForm = reactive({newPassword: ''})
 const pwdRules = reactive<FormRules>({
   newPassword: [
-    { required: true, message: '新密码不能为空', trigger: 'blur' },
-    { min: 6, message: '密码不能少于6位', trigger: 'blur' }
+    {required: true, message: '新密码不能为空', trigger: 'blur'},
+    {min: 6, message: '密码不能少于6位', trigger: 'blur'}
   ]
 })
 

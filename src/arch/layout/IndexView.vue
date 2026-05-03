@@ -10,11 +10,11 @@
       <div class="menu-container">
         <el-menu
           :default-active="route.path"
-          class="el-menu-vertical"
-          background-color="#141414"
-          text-color="#E5EAF3"
           active-text-color="#409EFF"
+          background-color="#141414"
+          class="el-menu-vertical"
           router
+          text-color="#E5EAF3"
         >
           <!-- 静态系统主页始终保留在最上方 -->
           <el-menu-item index="/placeholder">
@@ -48,21 +48,24 @@
         <div class="header-actions">
           <!-- 🌟 新增：消息预警小铃铛 -->
           <div class="message-bell" @click="openMessageDrawer">
-            <el-badge :value="msgStore.unreadCount" :hidden="msgStore.unreadCount === 0" :max="99" class="bell-badge">
-              <el-icon :size="20"><Bell/></el-icon>
+            <el-badge :hidden="msgStore.unreadCount === 0" :max="99" :value="msgStore.unreadCount"
+                      class="bell-badge">
+              <el-icon :size="20">
+                <Bell/>
+              </el-icon>
             </el-badge>
           </div>
 
           <el-dropdown trigger="click" @command="handleCommand">
             <span class="user-dropdown">
-              <el-avatar :size="32" :icon="UserFilled" class="user-avatar"/>
+              <el-avatar :icon="UserFilled" :size="32" class="user-avatar"/>
               <span class="username">{{ authStore.username || '管理员' }}</span>
               <el-icon class="el-icon--right"><ArrowDown/></el-icon>
             </span>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item command="changePwd" :icon="Lock">修改密码</el-dropdown-item>
-                <el-dropdown-item command="logout" :icon="SwitchButton" divided>退出登录
+                <el-dropdown-item :icon="Lock" command="changePwd">修改密码</el-dropdown-item>
+                <el-dropdown-item :icon="SwitchButton" command="logout" divided>退出登录
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -74,8 +77,8 @@
       <div class="tags-view-container">
         <el-tabs
           v-model="activeTabPath"
-          type="card"
           class="custom-tabs"
+          type="card"
           @tab-click="handleTabClick"
           @tab-remove="handleTabRemove"
         >
@@ -92,7 +95,7 @@
       <!-- 核心路由出口 (结合 KeepAlive 缓存实例) -->
       <section class="router-view-container">
         <router-view v-slot="{ Component, route }">
-          <transition name="fade-transform" mode="out-in">
+          <transition mode="out-in" name="fade-transform">
             <!-- 🌟 史诗级关键：:key="route.path" 强制 Vue 为同一个组件的不同路径创建独立的缓存实例！ -->
             <!-- 🌟 加上 :include="tagsStore.cachedViewNames"，实现受控销毁 -->
             <keep-alive :include="tagsStore.cachedViewNames">
@@ -106,10 +109,10 @@
     <!-- 🌟 修改密码对话框 -->
     <el-dialog
       v-model="pwdDialogVisible"
-      title="修改登录密码"
-      width="400px"
       append-to-body
       destroy-on-close
+      title="修改登录密码"
+      width="400px"
     >
       <el-form
         ref="pwdFormRef"
@@ -119,46 +122,48 @@
         @keyup.enter="submitChangePwd"
       >
         <el-form-item label="原密码" prop="oldPassword">
-          <el-input v-model="pwdForm.oldPassword" type="password" show-password
-                    placeholder="请输入原密码" oncopy="return false" oncut="return false"/>
+          <el-input v-model="pwdForm.oldPassword" oncopy="return false" oncut="return false"
+                    placeholder="请输入原密码" show-password type="password"/>
         </el-form-item>
         <el-form-item label="新密码" prop="newPassword">
-          <el-input v-model="pwdForm.newPassword" type="password" show-password
-                    placeholder="请输入新密码(不少于6位)" oncopy="return false"
-                    oncut="return false"/>
+          <el-input v-model="pwdForm.newPassword" oncopy="return false" oncut="return false"
+                    placeholder="请输入新密码(不少于6位)" show-password
+                    type="password"/>
         </el-form-item>
         <el-form-item label="确认密码" prop="confirmPassword">
-          <el-input v-model="pwdForm.confirmPassword" type="password" show-password
-                    placeholder="请再次输入新密码" oncopy="return false" oncut="return false"/>
+          <el-input v-model="pwdForm.confirmPassword" oncopy="return false" oncut="return false"
+                    placeholder="请再次输入新密码" show-password type="password"/>
         </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="pwdDialogVisible = false">取消</el-button>
-          <el-button type="primary" :loading="isSubmitting"
+          <el-button :loading="isSubmitting" type="primary"
                      @click="submitChangePwd">确认修改</el-button>
         </span>
       </template>
     </el-dialog>
 
     <!-- 🌟 消息中心抽屉 -->
-    <el-drawer v-model="msgDrawerVisible" title="消息与预警中心" size="400px" append-to-body>
-      <div class="msg-drawer-container" v-loading="msgLoading">
+    <el-drawer v-model="msgDrawerVisible" append-to-body size="400px" title="消息与预警中心">
+      <div v-loading="msgLoading" class="msg-drawer-container">
         <div class="msg-header">
           <el-radio-group v-model="msgPage.readStatus" size="small" @change="fetchMessages">
             <el-radio-button :label="undefined">全部</el-radio-button>
             <el-radio-button :label="0">未读</el-radio-button>
             <el-radio-button :label="1">已读</el-radio-button>
           </el-radio-group>
-          <el-button type="primary" link size="small" @click="handleReadAll" :disabled="msgStore.unreadCount === 0">
+          <el-button :disabled="msgStore.unreadCount === 0" link size="small" type="primary"
+                     @click="handleReadAll">
             全部已读
           </el-button>
         </div>
 
-        <div class="msg-list" v-if="msgList.length > 0">
-          <div v-for="msg in msgList" :key="msg.id" class="msg-item" :class="{ 'read-status': msg.readStatus === 1 }" @click="handleRead(msg)">
+        <div v-if="msgList.length > 0" class="msg-list">
+          <div v-for="msg in msgList" :key="msg.id" :class="{ 'read-status': msg.readStatus === 1 }"
+               class="msg-item" @click="handleRead(msg)">
             <div class="msg-item-header">
-              <el-tag :type="msg.msgType === 1 ? 'warning' : 'info'" size="small" effect="dark">
+              <el-tag :type="msg.msgType === 1 ? 'warning' : 'info'" effect="dark" size="small">
                 {{ msg.msgType === 1 ? '预警' : '通知' }}
               </el-tag>
               <span class="msg-title">{{ msg.title }}</span>
@@ -168,34 +173,27 @@
             <div class="msg-time">{{ formatTime(msg.createTime) }}</div>
           </div>
         </div>
-        <el-empty v-else description="暂无消息记录" :image-size="100" />
+        <el-empty v-else :image-size="100" description="暂无消息记录"/>
       </div>
 
       <template #footer>
         <el-pagination
-          small
-          layout="prev, pager, next"
-          :total="msgTotal"
           v-model:current-page="msgPage.pageNo"
           :page-size="msgPage.pageSize"
-          @current-change="handleMsgPageChange"
+          :total="msgTotal"
           class="msg-pagination"
+          layout="prev, pager, next"
+          small
+          @current-change="handleMsgPageChange"
         />
       </template>
     </el-drawer>
   </div>
 </template>
 <script lang="ts" setup>
-import {reactive, ref, watch, onMounted} from 'vue'
+import {onMounted, reactive, ref, watch} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
-import {
-  ArrowDown,
-  Lock,
-  HomeFilled,
-  SwitchButton,
-  UserFilled,
-  Bell
-} from '@element-plus/icons-vue'
+import {ArrowDown, Bell, HomeFilled, Lock, SwitchButton, UserFilled} from '@element-plus/icons-vue'
 import type {FormInstance, FormRules, TabsPaneContext} from 'element-plus'
 import {ElMessage, ElMessageBox, type TabPaneName} from 'element-plus'
 import {useAuthStore} from '@/arch/auth/store/store'
@@ -207,8 +205,8 @@ import type {ChangePwdReq} from "@/arch/auth/type/changePwdReq.ts";
 import {changePasswordApi} from "@/arch/auth/api/api.ts";
 
 // 2. 引入我们刚写的 messageStore 和 API
-import { useMessageStore } from '@/arch/message/store/message'
-import { pageMessagesApi, markAsReadApi, markAllAsReadApi } from '@/arch/message/api/message'
+import {useMessageStore} from '@/arch/message/store/message'
+import {markAllAsReadApi, markAsReadApi, pageMessagesApi} from '@/arch/message/api/message'
 // 如果没有装 dayjs，可以用原生 Date，这里建议格式化时间
 import dayjs from 'dayjs'
 
@@ -230,7 +228,7 @@ const msgDrawerVisible = ref(false)
 const msgList = ref<any[]>([])
 const msgLoading = ref(false)
 const msgTotal = ref(0)
-const msgPage = reactive({ pageNo: 1, pageSize: 15, readStatus: undefined as number | undefined })
+const msgPage = reactive({pageNo: 1, pageSize: 15, readStatus: undefined as number | undefined})
 
 
 const formatTime = (time: string) => {
@@ -307,7 +305,6 @@ const handleLogout = () => {
 }
 
 
-
 // 🌟 打开抽屉并加载数据
 const openMessageDrawer = () => {
   msgDrawerVisible.value = true
@@ -318,7 +315,7 @@ const fetchMessages = async () => {
   msgLoading.value = true
   try {
     const res = await pageMessagesApi(msgPage)
-    msgList.value = res.records ||[]
+    msgList.value = res.records || []
     msgTotal.value = res.total || 0
   } finally {
     msgLoading.value = false
@@ -582,6 +579,7 @@ const submitChangePwd = async () => {
 :deep(.custom-tabs .el-tabs__item:hover) {
   color: #409EFF;
 }
+
 /* ====== 消息小铃铛样式 ====== */
 .message-bell {
   margin-right: 24px;
