@@ -104,22 +104,12 @@
       </div>
 
       <!-- 📝 3. 分页控制区 -->
-      <div class="pagination-wrapper">
-        <div class="custom-page-size">
-          <span class="label">每页显示：</span>
-          <el-input-number v-model="currentParams!.pageSize" :max="1000" :min="1" :step="10"
-                           controls-position="right" size="small" @change="handleQuery"/>
-          <span class="unit">条</span>
-        </div>
-        <el-pagination
-          v-model:current-page="currentParams!.pageNo"
-          v-model:page-size="currentParams!.pageSize"
-          :total="currentTotal"
-          background
-          layout="total, prev, pager, next, jumper"
-          @current-change="handleQuery"
-        />
-      </div>
+      <StandardPagination
+        v-model:page-no="currentParams!.pageNo"
+        v-model:page-size="currentParams!.pageSize"
+        :total="currentTotal"
+        @refresh="handleQuery"
+      />
     </el-card>
   </div>
 </template>
@@ -257,33 +247,6 @@ onActivated(() => {
 .table-wrapper {
   flex: 1;
   overflow: hidden;
-}
-
-.pagination-wrapper {
-  margin-top: 16px;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 20px;
-}
-
-.custom-page-size {
-  display: flex;
-  align-items: center;
-  color: var(--el-text-color-regular);
-  font-size: 14px;
-}
-
-.custom-page-size .label {
-  margin-right: 8px;
-}
-
-.custom-page-size .unit {
-  margin-left: 8px;
-}
-
-:deep(.custom-page-size .el-input-number) {
-  width: 100px;
 }
 
 .text-success {

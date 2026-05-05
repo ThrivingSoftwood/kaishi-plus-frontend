@@ -228,7 +228,7 @@ const msgDrawerVisible = ref(false)
 const msgList = ref<any[]>([])
 const msgLoading = ref(false)
 const msgTotal = ref(0)
-const msgPage = reactive({pageNo: 1, pageSize: 15, readStatus: undefined as number | undefined})
+const msgPage = reactive({pageNo: 1, pageSize: 50, readStatus: undefined as number | undefined})
 
 
 const formatTime = (time: string) => {

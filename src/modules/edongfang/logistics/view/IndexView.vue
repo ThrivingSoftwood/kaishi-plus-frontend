@@ -56,18 +56,12 @@
         </el-table-column>
       </el-table>
 
-      <div class="pagination-container">
-        <el-pagination
-          v-model:current-page="queryParams.pageNo"
-          v-model:page-size="queryParams.pageSize"
-          :page-sizes="[20, 50, 100]"
-          :total="total"
-          background
-          layout="total, sizes, prev, pager, next, jumper"
-          @size-change="fetchList"
-          @current-change="fetchList"
-        />
-      </div>
+      <StandardPagination
+        v-model:page-no="queryParams.pageNo"
+        v-model:page-size="queryParams.pageSize"
+        :total="total"
+        @refresh="fetchList"
+      />
     </el-card>
   </div>
 </template>
@@ -84,7 +78,7 @@ const loading = ref(false)
 const list = ref([])
 const total = ref(0)
 
-const queryParams = reactive({pageNo: 1, pageSize: 20, eOrderId: '', expressNo: ''})
+const queryParams = reactive({pageNo: 1, pageSize: 50, eOrderId: '', expressNo: ''})
 
 const getStateText = (state: number) => {
   const map: Record<number, string> = {
@@ -167,11 +161,5 @@ const goDetail = (row: any) => router.push(`/edongfang/logistics/detail/view/${r
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-.pagination-container {
-  margin-top: 15px;
-  display: flex;
-  justify-content: flex-end;
 }
 </style>

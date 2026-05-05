@@ -18,24 +18,39 @@
         </template>
         <template #extra>
           <div class="actions">
-            <!-- 🌟 需求2：在“发货信息”模式下，强行隐藏所有操作按钮 -->
+            <!-- 🌟 需求：不仅判断自身状态，还要判断是否有全局挂起锁 pendingActionStatus -->
             <template v-if="!isShippedMode">
-              <el-button :disabled="orderData.status === -2" plain type="danger"
-                         @click="handleAction('cancel')">取消订单
-              </el-button>
-              <el-button :disabled="orderData.status === 5 || orderData.status === 1" type="primary"
-                         @click="handleAction('ship')">订单发货
-              </el-button>
-              <el-button :disabled="orderData.status === 1" type="success"
-                         @click="handleAction('deliver')">妥投完成
-              </el-button>
+              <el-button
+                type="danger" plain
+                @click="handleAction('cancel')"
+                :disabled="orderData.status === -2 || orderData.pendingActionStatus != null"
+              >取消订单</el-button>
+
+              <el-button
+                type="primary"
+                @click="handleAction('ship')"
+                :disabled="orderData.status === 5 || orderData.status === 1 || orderData.pendingActionStatus != null"
+              >订单发货</el-button>
+
+              <el-button
+                type="success"
+                @click="handleAction('deliver')"
+                :disabled="orderData.status === 1 || orderData.pendingActionStatus != null"
+              >妥投完成</el-button>
             </template>
             <el-button @click="goBack">返回列表</el-button>
           </div>
         </template>
       </el-page-header>
     </el-card>
-
+    <el-alert
+      v-if="orderData.pendingActionStatus != null"
+      :title="`E 采平台正在对本订单执行【${getPendingActionName(orderData.pendingActionStatus)}】指令，操作已锁定...`"
+      type="warning"
+      show-icon
+      :closable="false"
+      style="margin: 0 0 16px 0;"
+    />
     <!-- ================= 2. 订单主信息 (全量字段展示) ================= -->
     <el-card class="section-card" shadow="never">
       <template #header>
@@ -220,6 +235,7 @@ import {useRoute, useRouter} from 'vue-router'
 import {ElMessage, ElMessageBox} from 'element-plus'
 import {InfoFilled, List, Location, Tickets} from '@element-plus/icons-vue'
 import {cancelOrdersApi, deliverOrdersApi, getOrderDetailApi, shipOrdersApi} from '../api/order'
+import {getPendingActionName} from "@/modules/edongfang/order/type/buttonActionName.ts";
 
 defineOptions({name: 'EdongfangOrderDetail'})
 

@@ -57,7 +57,7 @@
         <el-table-column align="center" type="selection" width="50"/>
 
         <!-- 商品主图 -->
-        <el-table-column align="center" label="主图" width="100">
+        <!-- <el-table-column align="center" label="主图" width="100">
           <template #default="{ row }">
             <el-image
               :preview-src-list="[row.imagePath]"
@@ -75,7 +75,7 @@
               </template>
             </el-image>
           </template>
-        </el-table-column>
+        </el-table-column> -->
 
         <el-table-column label="商品SKU" prop="sku" show-overflow-tooltip width="160"/>
         <el-table-column label="商品名称" min-width="250" prop="name" show-overflow-tooltip/>
@@ -122,18 +122,12 @@
       </el-table>
 
       <!-- 📝 3. 分页控制区 -->
-      <div class="pagination-container">
-        <el-pagination
-          v-model:current-page="queryParams.pageNo"
-          v-model:page-size="queryParams.pageSize"
-          :page-sizes="[10, 20, 50, 100]"
-          :total="total"
-          background
-          layout="total, sizes, prev, pager, next, jumper"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
-      </div>
+      <StandardPagination
+        v-model:page-no="queryParams.pageNo"
+        v-model:page-size="queryParams.pageSize"
+        :total="total"
+        @refresh="fetchList"
+      />
     </el-card>
   </div>
 </template>
@@ -221,17 +215,8 @@ const handleSingleStatus = (row: any, state: number) => {
 
 // 路由跳转
 const handleAdd = () => router.push('/edongfang/product/detail/new')
-const handleEdit = (row: any) => router.push(`/edongfang/product/detail/edit/${row.sku}`)
 const handleView = (row: any) => router.push(`/edongfang/product/detail/view/${row.sku}`)
 
-const handleSizeChange = (val: number) => {
-  queryParams.pageSize = val
-  fetchList()
-}
-const handleCurrentChange = (val: number) => {
-  queryParams.pageNo = val
-  fetchList()
-}
 </script>
 
 <style scoped>

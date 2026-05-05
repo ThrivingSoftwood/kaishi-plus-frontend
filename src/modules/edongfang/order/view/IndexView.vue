@@ -31,13 +31,13 @@
         <div class="card-header">
           <div class="left-actions">
             <!-- 🌟 操作按钮联动，非选中状态禁用 -->
-            <el-button :disabled="!selectionIds.length" icon="CircleClose" type="danger"
+            <el-button v-if="!isShippedPage" :disabled="!selectionIds.length" icon="CircleClose" type="danger"
                        @click="handleBatchAction('cancel')">取消订单
             </el-button>
-            <el-button :disabled="!selectionIds.length" icon="Van" type="primary"
+            <el-button v-if="!isShippedPage" :disabled="!selectionIds.length" icon="Van" type="primary"
                        @click="handleBatchAction('ship')">订单发货
             </el-button>
-            <el-button :disabled="!selectionIds.length" icon="CircleCheck" type="success"
+            <el-button v-if="!isShippedPage" :disabled="!selectionIds.length" icon="CircleCheck" type="success"
                        @click="handleBatchAction('deliver')">妥投完成
             </el-button>
           </div>
@@ -49,7 +49,8 @@
 
       <el-table v-loading="loading" :data="orderList" border height="calc(100vh - 300px)" stripe
                 @selection-change="handleSelectionChange">
-        <el-table-column align="center" type="selection" width="50"/>
+<!--        <el-table-column type="selection" width="50" align="center" :selectable="checkSelectable" />-->
+        <el-table-column v-if="!isShippedPage" align="center" type="selection" width="50" :selectable="checkSelectable" />
         <el-table-column label="E采平台订单号" prop="eOrderId" width="200"/>
         <el-table-column label="收货人" prop="name" width="120"/>
         <el-table-column label="采购人" prop="purchaser" width="120"/>
@@ -57,15 +58,36 @@
           <template #default="{ row }"><span
             style="color: #409EFF; font-weight: bold;">¥ {{ row.orderPrice }}</span></template>
         </el-table-column>
-        <el-table-column align="center" label="订单状态" prop="status" width="120">
+        <!-- 🌟 1. 履约生命周期：订单状态列 (绑定发货 5、妥投 1) -->
+        <el-table-column prop="status" label="订单状态" width="160" align="center">
           <template #default="{ row }">
-            <el-tag :type="getStatusTag(row.status)" effect="dark">{{
-                getStatusText(row.status)
-              }}
+            <el-tag :type="getStatusTag(row.status)" effect="dark">
+              {{ getStatusText(row.status) }}
             </el-tag>
+
+            <!-- 仅当指令为 5 或 1 时，在此列显示气泡 -->
+            <div v-if="row.pendingActionStatus" style="margin-top: 4px;">
+              <el-tooltip effect="dark" placement="top" raw-content>
+                <template #content>
+                  <div style="line-height: 1.6; max-width: 220px">
+                    <span style="color: #E6A23C; font-weight: bold;">
+                      【{{ getPendingActionName(row.pendingActionStatus) }}】指令执行中
+                    </span><br/>
+                    系统正等待 E 采平台反馈处理结果，请您在 E 采平台完成处理后点击<b>【查询】</b>手动刷新。
+                  </div>
+                </template>
+                <el-tag type="warning" effect="plain" class="pending-tag">
+                  <el-icon class="is-loading"><Loading /></el-icon>
+                  {{ getPendingActionName(row.pendingActionStatus) }}中...
+                  <el-icon style="margin-left: 2px"><QuestionFilled /></el-icon>
+                </el-tag>
+              </el-tooltip>
+            </div>
           </template>
         </el-table-column>
-        <el-table-column align="center" label="客户确认状态" prop="submitState" width="120">
+
+        <!-- 🌟 2. 客商意向生命周期：客户确认状态列 (绑定取消 -2) -->
+        <el-table-column prop="submitState" label="采购确认状态" width="160" align="center">
           <template #default="{ row }">
             <el-tag v-if="row.submitState===1" effect="plain" type="success">已确认</el-tag>
             <el-tag v-else-if="row.submitState===-1" effect="plain" type="danger">已取消</el-tag>
@@ -82,18 +104,12 @@
         </el-table-column>
       </el-table>
 
-      <div class="pagination-container">
-        <el-pagination
-          v-model:current-page="queryParams.pageNo"
-          v-model:page-size="queryParams.pageSize"
-          :page-sizes="[20, 50, 100]"
-          :total="total"
-          background
-          layout="total, sizes, prev, pager, next, jumper"
-          @size-change="fetchList"
-          @current-change="fetchList"
-        />
-      </div>
+      <StandardPagination
+        v-model:page-no="queryParams.pageNo"
+        v-model:page-size="queryParams.pageSize"
+        :total="total"
+        @refresh="fetchList"
+      />
     </el-card>
   </div>
 </template>
@@ -103,6 +119,7 @@ import {computed, onMounted, reactive, ref, watch} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
 import {ElMessage, ElMessageBox} from 'element-plus'
 import {cancelOrdersApi, deliverOrdersApi, pageOrdersApi, shipOrdersApi} from '../api/order'
+import {getPendingActionName} from '@/modules/edongfang/order/type/buttonActionName'
 
 defineOptions({name: 'EdongfangOrderIndex'})
 
@@ -163,6 +180,7 @@ const fetchList = async () => {
   try {
     const res = await pageOrdersApi(queryParams)
     orderList.value = res.records || []
+    console.log(res.records)
     total.value = res.total || 0
   } finally {
     loading.value = false
@@ -209,6 +227,12 @@ const handleBatchAction = (actionType: 'cancel' | 'deliver' | 'ship') => {
     ElMessage.success(`订单已成功${config.name}`)
     fetchList()
   })
+}
+
+// 🌟 核心拦截逻辑：只有当 pendingActionStatus 为空（无挂起指令）时，才允许勾选
+const checkSelectable = (row: any) => {
+  // 如果 pendingActionStatus 有值，说明第三方正在处理，返回 false 禁用复选框
+  return row.pendingActionStatus == null
 }
 
 // 🌟 携带列表页的 isShipped 状态跳转详情
@@ -258,11 +282,5 @@ const goDetail = (row: any) => {
 .left-actions {
   display: flex;
   gap: 10px;
-}
-
-.pagination-container {
-  margin-top: 15px;
-  display: flex;
-  justify-content: flex-end;
 }
 </style>

@@ -28,7 +28,7 @@ export const useTraceStore = defineStore('trace', () => {
       // 必须使用 set 或者直接赋值，触发响应式
       queryParamsMap[routeKey] = {
         pageNo: 1,
-        pageSize: 20,
+        pageSize: 50,
         queryPurchased: isPurchased,
         number: '',
         vchcode: undefined,
