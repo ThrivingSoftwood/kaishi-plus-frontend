@@ -77,7 +77,7 @@
             </el-form-item>
           </el-col>
           <el-col :span="6">
-            <el-form-item label="重量 (kg)" prop="product.weight">
+            <el-form-item label="重量 (g)" prop="product.weight">
               <el-input-number v-model="formData.product.weight" :precision="2" :step="0.1" :min="0"
                                controls-position="right" style="width: 100%"/>
             </el-form-item>
@@ -188,7 +188,6 @@
       </el-card>
 
       <!-- ================= 5. 商品轮播图集 (Images 子表) ================= -->
-      <!-- 🌟 将以前的 FileUpload 改为标准的动态子表 -->
       <el-card class="section-card" shadow="never">
         <template #header>
           <div class="card-header">
@@ -199,7 +198,6 @@
           </div>
         </template>
 
-        <!-- 🌟 关键点：增加 class="image-table" 方便定位样式 -->
         <el-table :data="visibleImages" border stripe class="image-table">
           <el-table-column label="展示顺序" width="100" align="center">
             <template #default="{ row }">
@@ -214,7 +212,6 @@
             </template>
           </el-table-column>
 
-          <!-- 🌟 细节：增加排序操作 -->
           <el-table-column v-if="isEditing" label="排序调整" width="120" align="center">
             <template #default="{ $index }">
               <el-button-group>
@@ -341,8 +338,9 @@
             <div>
               <el-icon><Box/></el-icon>
               <span>区域库存分布</span></div>
+            <!-- 🌟 需求改造 2: 点击添加库存，数量默认赋值为 9999 -->
             <el-button v-if="isEditing" type="primary" link icon="Plus"
-                       @click="addRow(formData.stocks, {area: '', num: 0, desc: '有货'})">添加区域库存
+                       @click="addRow(formData.stocks, {area: '', num: 9999, desc: '有货'})">添加区域库存
             </el-button>
           </div>
         </template>
@@ -402,17 +400,14 @@ const submitting = ref(false)
 const mode = computed(() => route.params.mode as 'new' | 'edit' | 'view')
 const sku = computed(() => route.params.sku as string)
 
-// 🌟 核心控制逻辑：是否处于编辑状态
 const isEditing = ref(mode.value === 'new')
 
-// 🌟 修改：图片显示的计算属性需要严格按照 order 排序
 const visibleImages = computed(() => {
   return formData.images
     .filter(r => r.dealType !== DEAL_TYPE.DELETE)
-    .sort((a, b) => (a.order || 0) - (b.order || 0)) // 必须实时按 order 排序，这样改数字行才会动
+    .sort((a, b) => (a.order || 0) - (b.order || 0))
 })
 
-// 🌟 新增：专门针对图片的新增行（自动计算下一个 Order）
 const addImageRow = () => {
   const maxOrder = formData.images.length > 0
     ? Math.max(...formData.images.map(i => i.order || 0))
@@ -420,11 +415,6 @@ const addImageRow = () => {
   formData.images.push({ path: '', order: maxOrder + 1, dealType: DEAL_TYPE.INSERT })
 }
 
-/**
- * 🌟 核心细节：移动行逻辑
- * @param index 当前在 visibleImages 中的索引
- * @param direction -1 为上移，1 为下移
- */
 const moveRow = (index: number, direction: number) => {
   const targetIndex = index + direction
   if (targetIndex < 0 || targetIndex >= visibleImages.value.length) return
@@ -432,17 +422,12 @@ const moveRow = (index: number, direction: number) => {
   const currentRow = visibleImages.value[index]
   const targetRow = visibleImages.value[targetIndex]
 
-  // 1. 交换两行的 order 值
   const tempOrder = currentRow.order
   currentRow.order = targetRow.order
   targetRow.order = tempOrder
 
-  // 2. 标记两行都需要更新
   markUpdate(currentRow)
   markUpdate(targetRow)
-
-  // 💡 提示：因为 visibleImages 是基于 order 排序的计算属性，
-  // 只要 order 值一变，Vue 就会自动触发 Table 重新渲染，行位置瞬间交换。
 }
 
 const pageTitle = computed(() => {
@@ -451,12 +436,12 @@ const pageTitle = computed(() => {
   return '商品详情展示'
 })
 
-// 初始化所有需要的字段
+// 🌟 需求改造 2: 在新增模式下的默认值修改，taxRate = 0.13, ware = '无'
 const formData = reactive<ProductSaveReq>({
   product: {
     sku: '', name: '', brandName: '', state: 1, imagePath: '', category: '', categoryName: '',
-    introduction: '', searchKeyword: '', weight: 0, ware: '', unit: '',
-    url: '', model: '', productArea: '', upc: '', service: '', param: '', taxRate: 0, taxCategoryCode: '', saleActives: 0
+    introduction: '', searchKeyword: '', weight: 0, ware: '无', unit: '', // ware 改为 '无'
+    url: '', model: '', productArea: '', upc: '', service: '', param: '', taxRate: 0.13, taxCategoryCode: '', saleActives: 0 // taxRate 改为 0.13
   },
   prices: [], images: [], params: [], stocks:[]
 })
@@ -491,6 +476,9 @@ const markUpdate = (row: any) => {
 onMounted(async () => {
   if (mode.value !== 'new' && sku.value) {
     await fetchDetail()
+  } else if (mode.value === 'new') {
+    // 🌟 需求改造 2: 新增模式下，直接为用户默认添加一条库存数量为 9999 的记录
+    addRow(formData.stocks, {area: '默认仓库', num: 9999, desc: '有货'})
   }
 })
 
@@ -504,10 +492,8 @@ const fetchDetail = async () => {
     formData.params = (res.params ||[]).map(i => ({...i, dealType: DEAL_TYPE.SELECT}))
     formData.stocks = (res.stocks ||[]).map(i => ({...i, dealType: DEAL_TYPE.SELECT}))
 
-    // 🌟 直接应用状态机逻辑，无需再用代理排序转换
     const originalImages = res.images ||[]
     formData.images = originalImages.map(i => ({...i, dealType: DEAL_TYPE.SELECT}))
-    // 为了美观还是可以排个序，但不影响提交逻辑
     formData.images.sort((a, b) => a.order - b.order)
 
   } finally {
@@ -515,22 +501,19 @@ const fetchDetail = async () => {
   }
 }
 
-// 交互逻辑：点击编辑
 const startEdit = () => {
   isEditing.value = true
 }
 
-// 交互逻辑：点击取消
 const cancelEdit = async () => {
   if (mode.value === 'new') {
     goBackList()
   } else {
     isEditing.value = false
-    await fetchDetail()     // 重新拉取数据，丢弃未保存的修改
+    await fetchDetail()
   }
 }
 
-// 🌟 保存逻辑
 const handleSave = async () => {
   if (!formRef.value) return
 
@@ -558,15 +541,17 @@ const handleSave = async () => {
   })
 }
 
-// 退回列表页
 const goBackList = () => router.push('/edongfang/product/list')
 
 const rules = {
   'product.sku':[{required: true, message: '请输入商品SKU', trigger: 'blur'}],
   'product.name': [{required: true, message: '请输入商品名称', trigger: 'blur'}],
   'product.brandName': [{required: true, message: '请输入品牌', trigger: 'blur'}],
-  // 🌟 修改为主图URL文本校验
-  'product.imagePath':[{required: true, message: '请输入商品主图网址', trigger: 'blur'}]
+  'product.imagePath':[{required: true, message: '请输入商品主图网址', trigger: 'blur'}],
+  // 🌟 需求改造 1: 增加计量单位、分类编码、分类名称为必填项 (编辑和新增模式下生效)
+  'product.category': [{required: true, message: '请输入分类编码', trigger: 'blur'}],
+  'product.categoryName': [{required: true, message: '请输入分类名称', trigger: 'blur'}],
+  'product.unit': [{required: true, message: '请输入计量单位', trigger: 'blur'}]
 }
 
 </script>
@@ -627,7 +612,6 @@ const rules = {
   margin-left: 16px;
 }
 
-/* 确保禁用状态下的文字颜色依然清晰 */
 :deep(.el-input.is-disabled .el-input__inner) {
   -webkit-text-fill-color: var(--el-text-color-regular);
   color: var(--el-text-color-regular);
@@ -638,7 +622,6 @@ const rules = {
   padding-bottom: 8px !important;
 }
 
-/* 表格内组件间距微调 */
 :deep(.el-table .el-input-number) {
   width: 100%;
 }

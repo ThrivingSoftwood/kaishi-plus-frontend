@@ -61,6 +61,7 @@ declare module 'vue' {
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     StandardPagination: typeof import('./shared/components/StandardPagination.vue')['default']
+    WeightRangePicker: typeof import('./shared/components/WeightRangePicker.vue')['default']
   }
   export interface GlobalDirectives {
     vLoading: typeof import('element-plus/es')['ElLoadingDirective']

@@ -4,4 +4,7 @@ export interface ProductQueryReq {
   pageSize: number
   sku?: string
   name?: string
+  productArea?: string
+  minWeight?: number
+  maxWeight? :number
 }

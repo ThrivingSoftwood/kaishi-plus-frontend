@@ -11,6 +11,19 @@
           <el-input v-model.trim="queryParams.name" clearable placeholder="模糊搜索商品名称"
                     @keyup.enter="handleQuery"/>
         </el-form-item>
+        <el-form-item label="产地">
+          <el-input v-model.trim="queryParams. productArea" clearable placeholder="模糊搜索产地信息"
+                    @keyup.enter="handleQuery"/>
+        </el-form-item>
+        <el-form-item label="重量范围">
+          <!-- 使用我们自定义的组件 -->
+          <WeightRangePicker
+            v-model="weightRange"
+            start-placeholder="最小重量"
+            end-placeholder="最大重量"
+            unit="g"
+          />
+        </el-form-item>
         <el-form-item>
           <el-button icon="Search" type="primary" @click="handleQuery">查询</el-button>
           <el-button icon="Refresh" @click="handleReset">重置</el-button>
@@ -133,7 +146,7 @@
 </template>
 
 <script lang="ts" setup>
-import {onMounted, reactive, ref} from 'vue'
+import {onMounted, reactive, ref, computed} from 'vue'
 import {useRouter} from 'vue-router'
 import {ElMessage, ElMessageBox} from 'element-plus'
 import {Picture} from '@element-plus/icons-vue'
@@ -153,7 +166,26 @@ const queryParams = reactive({
   pageNo: 1,
   pageSize: 50,
   sku: '',
-  name: ''
+  name: '',
+  productArea: '',
+  minWeight: null,
+  maxWeight: null
+})
+
+
+const weightRange = computed({
+  get: () => {
+    return [
+      queryParams.minWeight ?? null,
+      queryParams.maxWeight ?? null
+    ]
+  },
+  set: (val) => {
+    // 当组件内修改值时，自动拆分回原有的两个字段
+    const [min, max] = val || [null, null]
+    queryParams.minWeight = min
+    queryParams.maxWeight = max
+  }
 })
 
 // 获取列表数据
@@ -180,6 +212,9 @@ const handleQuery = () => {
 const handleReset = () => {
   queryParams.sku = ''
   queryParams.name = ''
+  queryParams.productArea = ''
+  queryParams.minWeight = null
+  queryParams.maxWeight = null
   handleQuery()
 }
 

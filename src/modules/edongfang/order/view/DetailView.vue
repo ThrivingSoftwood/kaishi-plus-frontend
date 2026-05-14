@@ -37,6 +37,8 @@
                 @click="handleAction('deliver')"
                 :disabled="orderData.status === 1 || orderData.pendingActionStatus != null"
               >妥投完成</el-button>
+              <!-- 1. 修改按钮的点击事件 -->
+              <el-button type="info" icon="Printer" @click="handlePrint">打印订单</el-button>
             </template>
             <el-button @click="goBack">返回列表</el-button>
           </div>
@@ -226,6 +228,7 @@
         </el-table-column>
       </el-table>
     </el-card>
+    <OrderPrintTemplate :orderData="orderData" :items="items" printerName="管理员" />
   </div>
 </template>
 
@@ -236,6 +239,7 @@ import {ElMessage, ElMessageBox} from 'element-plus'
 import {InfoFilled, List, Location, Tickets} from '@element-plus/icons-vue'
 import {cancelOrdersApi, deliverOrdersApi, getOrderDetailApi, shipOrdersApi} from '../api/order'
 import {getPendingActionName} from "@/modules/edongfang/order/type/buttonActionName.ts";
+import OrderPrintTemplate from "@/modules/edongfang/order/view/OrderPrintTemplate.vue";
 
 defineOptions({name: 'EdongfangOrderDetail'})
 
@@ -266,7 +270,10 @@ const getStatusText = (s: number) => {
       return '状态未知'
   }
 }
-
+// 2. 在 <script lang="ts" setup> 中增加这个方法
+const handlePrint = () => {
+  window.print()
+}
 const getStatusTag = (s: number) => {
   switch (s) {
     case 0:

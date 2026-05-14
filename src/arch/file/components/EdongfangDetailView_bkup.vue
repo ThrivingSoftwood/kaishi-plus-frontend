@@ -79,7 +79,7 @@
             </el-form-item>
           </el-col>
           <el-col :span="6">
-            <el-form-item label="重量 (kg)" prop="product.weight">
+            <el-form-item label="重量 (g)" prop="product.weight">
               <el-input-number v-model="formData.product.weight" :min="0" :precision="2" :step="0.1"
                                controls-position="right" style="width: 100%"/>
             </el-form-item>
